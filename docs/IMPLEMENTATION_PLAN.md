@@ -71,7 +71,7 @@ uses the brief's starting values, adjusted for contrast (see Design system below
 
 ## Known limitations (honest status)
 
-- **No PostgreSQL run yet.** No PostgreSQL server was available on this machine, and running downloaded PostgreSQL binaries was blocked by the tool sandbox. The full suite passes on SQLite, the migration renders valid PostgreSQL DDL, and CI is configured to run the suite (including the concurrent-oversell test) on PostgreSQL 17. That test has **not been executed yet**.
+- **PostgreSQL verified in CI, not locally.** No PostgreSQL server is available on the development machine. GitHub Actions run `18c82a1` passed the full backend suite against a PostgreSQL 17 service, including the step that enables the concurrent-oversell test. The step passed; the per-test log was not downloaded.
 - **Mobile app not yet run on a device or emulator against a live API.** The Dart code compiles: `flutter analyze` is clean and 28 tests pass. The first Android debug APK build was stopped because the machine ran low on memory, so a full Gradle build has not completed yet. iOS was not built: that needs macOS and Xcode.
 - **Offline covers sales only.** Product edits, stock adjustments, expenses and returns need a connection (see OFFLINE_SYNC.md).
 - The offline flow is unit-tested against a fake server and an in-memory SQLite database. It has not yet been
