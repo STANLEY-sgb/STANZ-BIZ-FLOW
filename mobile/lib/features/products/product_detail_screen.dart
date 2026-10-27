@@ -142,7 +142,7 @@ class ProductDetailScreen extends ConsumerWidget {
                           children: [
                             Expanded(
                               child: PrimaryButton(
-                                label: 'Receive stock',
+                                label: 'Receive',
                                 icon: Icons.add_rounded,
                                 onPressed: () => showStockSheet(context, ref, business!, p, type: 'receipt'),
                               ),

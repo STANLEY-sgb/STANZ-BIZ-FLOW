@@ -450,6 +450,7 @@ class SetupChecklistScreen extends ConsumerWidget {
                     icon: Icons.add_box_rounded,
                     title: 'Add your first product',
                     subtitle: 'Name, price and how many you have in stock.',
+                    done: b.onboardingStep != 'first_product',
                     onTap: () => context.push('/products/new'),
                   ),
                   _ChecklistItem(
@@ -489,6 +490,7 @@ class _ChecklistItem extends StatelessWidget {
     required this.subtitle,
     this.onTap,
     this.enabled = true,
+    this.done = false,
   });
 
   final IconData icon;
@@ -496,6 +498,7 @@ class _ChecklistItem extends StatelessWidget {
   final String subtitle;
   final VoidCallback? onTap;
   final bool enabled;
+  final bool done;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -512,7 +515,10 @@ class _ChecklistItem extends StatelessWidget {
                 color: BizColors.primaryContainer,
                 borderRadius: BorderRadius.circular(Radii.sm),
               ),
-              child: Icon(icon, color: BizColors.primaryPressed),
+              child: Icon(
+                done ? Icons.check_rounded : icon,
+                color: done ? BizColors.success : BizColors.primaryPressed,
+              ),
             ),
             const SizedBox(width: Space.sm),
             Expanded(
@@ -525,7 +531,10 @@ class _ChecklistItem extends StatelessWidget {
                 ],
               ),
             ),
-            if (enabled) const Icon(Icons.chevron_right_rounded, color: BizColors.textSecondary),
+            if (done)
+              const StatusChip('Done', tone: Tone.success)
+            else if (enabled)
+              const Icon(Icons.chevron_right_rounded, color: BizColors.textSecondary),
           ],
         ),
       ),

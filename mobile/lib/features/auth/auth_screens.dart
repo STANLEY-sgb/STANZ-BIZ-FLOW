@@ -69,76 +69,78 @@ class _WelcomeIllustration extends StatelessWidget {
   const _WelcomeIllustration();
 
   @override
-  Widget build(BuildContext context) => ExcludeSemantics(
-    child: SizedBox(
-      width: 260,
-      height: 220,
-      child: Stack(
-        children: [
-          Positioned(
-            left: 20,
-            top: 10,
-            child: Container(
-              width: 190,
-              height: 190,
-              decoration: const BoxDecoration(color: BizColors.navySoft, shape: BoxShape.circle),
-            ),
+  // Purely decorative (excluded from semantics), so it keeps its designed proportions instead of
+  // following system text scaling, which made the floating cards overlap on large-font phones.
+  Widget build(BuildContext context) => ExcludeSemantics(child: MediaQuery.withNoTextScaling(child: _composition()));
+
+  Widget _composition() => SizedBox(
+    width: 260,
+    height: 220,
+    child: Stack(
+      children: [
+        Positioned(
+          left: 20,
+          top: 10,
+          child: Container(
+            width: 190,
+            height: 190,
+            decoration: const BoxDecoration(color: BizColors.navySoft, shape: BoxShape.circle),
           ),
-          Positioned(
-            left: 40,
-            top: 40,
-            child: _floatingCard(
-              width: 180,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Today's sales", style: TextStyle(fontSize: 11, color: BizColors.textSecondary)),
-                  const SizedBox(height: 2),
-                  const Text(
-                    'Live from your shop',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: BizColors.navy),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      for (final h in [18.0, 30.0, 24.0, 42.0, 36.0, 54.0])
-                        Container(
-                          margin: const EdgeInsets.only(right: 6),
-                          width: 16,
-                          height: h,
-                          decoration: BoxDecoration(
-                            color: h == 54 ? BizColors.primary : BizColors.secondary,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
+        ),
+        Positioned(
+          left: 40,
+          top: 40,
+          child: _floatingCard(
+            width: 180,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("Today's sales", style: TextStyle(fontSize: 11, color: BizColors.textSecondary)),
+                const SizedBox(height: 2),
+                const Text(
+                  'Live from your shop',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: BizColors.navy),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    for (final h in [18.0, 30.0, 24.0, 42.0, 36.0, 54.0])
+                      Container(
+                        margin: const EdgeInsets.only(right: 6),
+                        width: 16,
+                        height: h,
+                        decoration: BoxDecoration(
+                          color: h == 54 ? BizColors.primary : BizColors.secondary,
+                          borderRadius: BorderRadius.circular(4),
                         ),
-                    ],
-                  ),
-                ],
-              ),
+                      ),
+                  ],
+                ),
+              ],
             ),
           ),
-          Positioned(
-            right: 0,
-            bottom: 8,
-            child: _floatingCard(
-              width: 130,
-              child: const Row(
-                children: [
-                  Icon(Icons.inventory_2_rounded, color: BizColors.primary, size: 20),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Stock in sync',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: BizColors.navy),
-                    ),
+        ),
+        Positioned(
+          right: 0,
+          bottom: 8,
+          child: _floatingCard(
+            width: 130,
+            child: const Row(
+              children: [
+                Icon(Icons.inventory_2_rounded, color: BizColors.primary, size: 20),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Stock in sync',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: BizColors.navy),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     ),
   );
 

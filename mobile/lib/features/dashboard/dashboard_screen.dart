@@ -22,12 +22,12 @@ final dashboardProvider = FutureProvider.autoDispose<DashboardData>((ref) {
   return ref.watch(apiProvider).dashboard(bid, ref.watch(dashboardPeriodProvider));
 });
 
-const _periods = {'today': 'Today', '7d': '7 days', '30d': '30 days', 'month': 'This month'};
+const _periods = {'today': 'Today', '7d': '7d', '30d': '30d', 'month': 'Month'};
 const _comparisons = {
-  'today': 'yesterday',
-  '7d': 'previous 7 days',
-  '30d': 'previous 30 days',
-  'month': 'same days last month',
+  'today': (vs: 'yesterday', none: 'No sales yesterday to compare'),
+  '7d': (vs: 'the previous 7 days', none: 'No sales in the previous 7 days to compare'),
+  '30d': (vs: 'the previous 30 days', none: 'No sales in the previous 30 days to compare'),
+  'month': (vs: 'the same days last month', none: 'No sales in the same days last month to compare'),
 };
 
 class DashboardScreen extends ConsumerWidget {
@@ -68,7 +68,8 @@ class DashboardScreen extends ConsumerWidget {
                 child: PageBody(
                   padding: const EdgeInsets.fromLTRB(Space.page, 0, Space.page, Space.md),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
                         '$greeting${session.user == null ? '' : ', ${session.user!.firstName}'}',
@@ -225,6 +226,9 @@ class _QuickActions extends StatelessWidget {
                       const SizedBox(height: Space.xxs),
                       Text(
                         a.$2,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.labelMedium
                             ?.copyWith(color: a.$4 ? Colors.white : BizColors.textPrimary, fontWeight: FontWeight.w600),
                       ),
@@ -291,7 +295,7 @@ class _HeroMetric extends StatelessWidget {
   const _HeroMetric({required this.d, required this.comparison});
 
   final DashboardData d;
-  final String comparison;
+  final ({String vs, String none}) comparison;
 
   @override
   Widget build(BuildContext context) {
@@ -313,8 +317,8 @@ class _HeroMetric extends StatelessWidget {
       value: cur.netSales.format(d.currency),
       trend: trend,
       footer: prev.netSales.isZero
-          ? '${cur.salesCount} ${cur.salesCount == 1 ? 'sale' : 'sales'} · no sales in the $comparison to compare'
-          : '${cur.salesCount} ${cur.salesCount == 1 ? 'sale' : 'sales'} · vs $comparison',
+          ? '${cur.salesCount} ${cur.salesCount == 1 ? 'sale' : 'sales'} · ${comparison.none}'
+          : '${cur.salesCount} ${cur.salesCount == 1 ? 'sale' : 'sales'} · vs ${comparison.vs}',
     );
   }
 }

@@ -96,6 +96,8 @@ abstract final class AppTheme {
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
+        helperMaxLines: 2,
+        errorMaxLines: 3,
         filled: true,
         fillColor: BizColors.surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: Space.md, vertical: Space.md),

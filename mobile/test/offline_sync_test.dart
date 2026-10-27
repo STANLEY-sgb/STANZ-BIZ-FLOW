@@ -143,6 +143,36 @@ void main() {
     expect(await db.dueSales('b1', 'u1', now), isEmpty, reason: 'rejected sales are never resent automatically');
   });
 
+  test('a rejected sale can be retried after the cause is fixed, keeping its idempotency key', () async {
+    await enqueue('ref-r');
+    var stockAvailable = false;
+    final sentRefs = <String>[];
+    server = (o) {
+      final sale = ((o.data as Map)['sales'] as List).single as Map;
+      sentRefs.add(sale['client_reference'] as String);
+      return json(200, {
+        'results': [
+          stockAvailable
+              ? {'client_reference': 'ref-r', 'status': 'accepted', 'sale_id': 's9', 'receipt_number': 'R-000009'}
+              : {
+                  'client_reference': 'ref-r',
+                  'status': 'rejected',
+                  'error': {'code': 'insufficient_stock', 'message': 'Not enough stock.'},
+                },
+        ],
+      });
+    };
+    expect((await sync.syncSales('b1', 'u1', 'dev-1')).rejected, 1);
+    expect(await db.dueSales('b1', 'u1', now), isEmpty);
+
+    stockAvailable = true; // e.g. a manager received stock
+    await sync.retryRejected('ref-r');
+    final report = await sync.syncSales('b1', 'u1', 'dev-1');
+    expect(report.accepted, 1);
+    expect(sentRefs, ['ref-r', 'ref-r'], reason: 'the retry must reuse the original idempotency key');
+    expect(await db.watchUnresolved('b1').first, isEmpty);
+  });
+
   test('network failure keeps sales queued with bounded exponential backoff', () async {
     await enqueue('ref-a');
     server = (o) => throw DioException.connectionError(requestOptions: o, reason: 'offline');

@@ -1,6 +1,6 @@
 # STANZ BizFlow — implementation plan & status
 
-_Last updated: 2026-10-27 (milestone 2: offline selling)_
+_Last updated: 2026-10-28 (milestone 2 + device testing)_
 
 ## Starting point
 
@@ -58,24 +58,56 @@ uses the brief's starting values, adjusted for contrast (see Design system below
 - Tests: paging catalogue refresh, offline search and scan, idempotent re-queue (this caught and fixed a
   double stock decrement), accepted/duplicate/rejected handling, backoff, and per-user scoping
 
+## Device test — Samsung Galaxy S21 (SM-G991U, Android 13), 2026-10-28
+
+The debug APK was installed over wireless debugging, talking to a local API through `adb reverse`. Everything
+below was done in the real app on the phone, and the results were checked against the server:
+
+| Flow | Result |
+|---|---|
+| Register → 3-step business setup → checklist | ✅ account and business created; industry categories loaded |
+| Add product with phone-shop details (brand, model, storage, colour, warranty, IMEI) | ✅ stored exactly |
+| Online sale: 1 phone + 2 cases, cash 700,000 | ✅ receipt R-000001, total 680,000, change 20,000 |
+| Receive stock with unit cost | ✅ 2 → 6 units, weighted-average cost 506,667 |
+| Reports | ✅ net sales, COGS and gross profit match the server |
+| Server stopped → POS uses saved catalogue with an "Offline…" banner | ✅ |
+| Offline barcode scan → sale queued | ✅ |
+| App force-killed with a queued sale, server restarted, app relaunched | ✅ synced once (R-000002), stock correct |
+| Expired access token on relaunch | ✅ refreshed automatically |
+| Two tills, last stock: phone queues 6 offline while a second till sells 1 | ✅ server **rejected** the offline sale (`insufficient_stock`); no partial data |
+| Manager restocks → cashier taps Retry | ✅ recorded once (R-000004), stock 6 → 0 |
+
+Issues found on the device and fixed in this milestone:
+- Prices were truncated ("UGX 65…") at the phone's large font size. Money now scales down and never truncates,
+  and a regression test covers it.
+- Product tiles, cart lines and the product form were cramped at large font sizes, so their layouts were reworked.
+- Rejected offline sales had no Retry action, although the guidance told users to retry. Retry was added, with a test.
+- The offline catalogue kept stale stock after an online sale. It is now refreshed after every online sale.
+- Copy and visual fixes: comparison wording, header alignment, button labels, setup checklist ticks, and the
+  welcome illustration overlapping at large font sizes.
+- The Gradle heap was lowered from 8 GB to 3 GB (Kotlin compiled in-process). The template default had caused
+  out-of-memory kills on this 12 GB machine.
+
 ## Next milestones (recommended order)
 
 1. **Product import/export:** CSV/Excel upload with preview, column mapping, row errors and an asynchronous job for large files.
-3. **Product photos and receipt logo:** object storage, signed URLs and upload validation.
-4. **Camera barcode scanning** (hardware/Bluetooth scanners already work through the search field).
-5. **Customer screens in the app** (the API is done) and customer selection at checkout.
-6. **Email provider** (SMTP is implemented and needs credentials), email verification.
-7. **Billing provider** after choosing one (e.g. a Ugandan mobile money aggregator for web billing) and reviewing Google Play / App Store rules for in-app digital subscriptions.
-8. **Hardening:** PostgreSQL Row-Level Security as a second isolation layer, Redis-backed rate limiting for multi-instance deployments, load testing, crash reporting (Sentry or Firebase Crashlytics).
-9. **Brand assets:** final app icon and splash (the in-app logo mark is drawn in code for now), store screenshots.
+2. **Product photos and receipt logo:** object storage, signed URLs and upload validation.
+3. **Camera barcode scanning** (hardware/Bluetooth scanners already work through the search field).
+4. **Customer screens in the app** (the API is done) and customer selection at checkout.
+5. **Email provider** (SMTP is implemented and needs credentials), email verification.
+6. **Billing provider** after choosing one (e.g. a Ugandan mobile money aggregator for web billing) and reviewing Google Play / App Store rules for in-app digital subscriptions.
+7. **Hardening:** PostgreSQL Row-Level Security as a second isolation layer, Redis-backed rate limiting for multi-instance deployments, load testing, crash reporting (Sentry or Firebase Crashlytics).
+8. **Brand assets:** final app icon and splash (the in-app logo mark is drawn in code for now), store screenshots.
 
 ## Known limitations (honest status)
 
 - **PostgreSQL verified in CI, not locally.** No PostgreSQL server is available on the development machine. GitHub Actions run `18c82a1` passed the full backend suite against a PostgreSQL 17 service, including the step that enables the concurrent-oversell test. The step passed; the per-test log was not downloaded.
-- **Mobile app not yet run on a device or emulator against a live API.** The Dart code compiles: `flutter analyze` is clean and 28 tests pass. The first Android debug APK build was stopped because the machine ran low on memory, so a full Gradle build has not completed yet. iOS was not built: that needs macOS and Xcode.
+- **Android tested on one real device** (Samsung S21, Android 13), see above. iOS has not been built: that
+  needs macOS and Xcode. Small and older Android phones still need a pass.
 - **Offline covers sales only.** Product edits, stock adjustments, expenses and returns need a connection (see OFFLINE_SYNC.md).
-- The offline flow is unit-tested against a fake server and an in-memory SQLite database. It has not yet been
-  tried on a real phone in airplane mode.
+- Offline was simulated on the device by stopping the server or removing the adb tunnel. Network errors
+  look the same to the app as airplane mode, but airplane mode itself was not toggled, because that would also
+  have cut the wireless debugging connection.
 - Emails are not delivered until SMTP credentials are configured. The API reports `email_delivered: false` and never claims otherwise.
 - No real payment processing. Payments are *recorded*, not charged.
 - Rate limiting is in-memory (per process). Use a shared store before running multiple API replicas.

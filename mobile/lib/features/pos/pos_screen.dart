@@ -145,10 +145,29 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                               currency: b.currency,
                               onTap: () => _add(b, p),
                               trailing: inCart.isPositive
-                                  ? StatusChip('$inCart in cart', tone: Tone.brand)
+                                  ? Semantics(
+                                      label: '$inCart in cart',
+                                      child: ExcludeSemantics(
+                                        child: Container(
+                                          constraints: const BoxConstraints(minWidth: 36),
+                                          height: 36,
+                                          padding: const EdgeInsets.symmetric(horizontal: Space.xs),
+                                          alignment: Alignment.center,
+                                          decoration: const BoxDecoration(
+                                            color: BizColors.primary,
+                                            borderRadius: BorderRadius.all(Radius.circular(18)),
+                                          ),
+                                          child: Text(
+                                            '$inCart',
+                                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                                          ),
+                                        ),
+                                      ),
+                                    )
                                   : const Icon(
                                       Icons.add_circle_rounded,
                                       color: BizColors.primary,
+                                      size: 32,
                                       semanticLabel: 'Add to cart',
                                     ),
                             );
@@ -201,11 +220,12 @@ class _CartBar extends StatelessWidget {
                 ),
                 const SizedBox(width: Space.sm),
                 Expanded(
-                  child: Text(
+                  child: MoneyText(
                     cart.total.format(currency),
-                    style: Theme.of(context).textTheme.titleMedium!.copyWith(color: Colors.white).tabular,
+                    style: Theme.of(context).textTheme.titleMedium!.copyWith(color: Colors.white),
                   ),
                 ),
+                const SizedBox(width: Space.sm),
                 const Text(
                   'Review sale',
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
@@ -273,6 +293,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       unawaited(HapticFeedback.mediumImpact());
       controller.clear();
       invalidateCatalog(ref);
+      // Keep the offline catalogue's stock figures in step with what was just sold.
+      unawaited(ref.read(syncControllerProvider.notifier).run(refreshCatalog: true));
       if (mounted) context.pushReplacement('/sales/${sale['id']}?new=1');
     } on ApiError catch (e) {
       if (e.isNetwork) {
@@ -371,6 +393,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       children: [
                         for (final m in b.paymentMethods)
                           ChoiceChip(
+                            showCheckmark: false,
                             avatar: Icon(paymentMethodLabels[m]?.$2 ?? Icons.payments_rounded, size: 18),
                             label: Text(paymentMethodLabels[m]?.$1 ?? humanize(m)),
                             selected: method == m,
@@ -427,7 +450,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ],
                     const SizedBox(height: Space.lg),
                     PrimaryButton(
-                      label: 'Complete sale · ${cart.total.format(b.currency)}',
+                      label: 'Complete sale',
                       icon: Icons.check_rounded,
                       loading: _busy,
                       onPressed: () => _complete(b, cart),
@@ -456,38 +479,37 @@ class _CartLineRow extends ConsumerWidget {
     final cart = ref.read(cartProvider.notifier);
     final p = line.product;
     final atLimit = enforceStock && p.trackStock && !(p.quantityOnHand > line.quantity);
+    // Name on its own line, then price/stepper/total, so nothing is squeezed on narrow or large-text screens.
     return Padding(
-      padding: const EdgeInsets.all(Space.sm),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(Space.md, Space.sm, Space.xs, Space.xs),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(p.name, style: t.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
-                Text('${p.sellingPrice.format(currency)} each', style: t.bodySmall),
-              ],
-            ),
-          ),
-          IconButton(
-            tooltip: 'Remove one',
-            icon: const Icon(Icons.remove_circle_outline_rounded),
-            onPressed: () => cart.decrement(p.id),
-          ),
-          Text('${line.quantity}', style: t.titleMedium!.tabular),
-          IconButton(
-            tooltip: 'Add one',
-            icon: const Icon(Icons.add_circle_outline_rounded),
-            color: BizColors.primary,
-            onPressed: atLimit ? null : () => cart.increment(p.id),
-          ),
-          SizedBox(
-            width: 100,
-            child: Text(
-              line.total.format(currency, showCurrency: false),
-              textAlign: TextAlign.end,
-              style: t.titleSmall!.tabular,
-            ),
+          Text(p.name, style: t.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
+          Row(
+            children: [
+              Expanded(child: MoneyText('${p.sellingPrice.format(currency)} each', style: t.bodySmall)),
+              IconButton(
+                tooltip: 'Remove one',
+                icon: const Icon(Icons.remove_circle_outline_rounded),
+                onPressed: () => cart.decrement(p.id),
+              ),
+              Text('${line.quantity}', style: t.titleMedium!.tabular),
+              IconButton(
+                tooltip: 'Add one',
+                icon: const Icon(Icons.add_circle_outline_rounded),
+                color: BizColors.primary,
+                onPressed: atLimit ? null : () => cart.increment(p.id),
+              ),
+              Expanded(
+                child: MoneyText(
+                  line.total.format(currency, showCurrency: false),
+                  style: t.titleSmall,
+                  alignment: Alignment.centerRight,
+                ),
+              ),
+              const SizedBox(width: Space.xs),
+            ],
           ),
         ],
       ),

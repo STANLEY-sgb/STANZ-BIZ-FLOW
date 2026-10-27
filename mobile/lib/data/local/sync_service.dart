@@ -221,6 +221,22 @@ class OfflineSync {
     }
   }
 
+  /// Put a rejected sale back in the queue after the cause was fixed (e.g. stock received).
+  /// Safe: a rejected sale was never recorded by the server, and its idempotency key is unchanged.
+  Future<void> retryRejected(String clientReference) =>
+      (db.update(
+        db.pendingSales,
+      )..where((t) => t.clientReference.equals(clientReference) & t.state.equals('rejected'))).write(
+        const PendingSalesCompanion(
+          state: Value('pending'),
+          attempts: Value(0),
+          nextAttemptAt: Value(null),
+          lastErrorCode: Value(null),
+          lastErrorMessage: Value(null),
+          acknowledgedAt: Value(null),
+        ),
+      );
+
   /// Make a pending sale eligible immediately (manual "Sync now").
   Future<void> resetBackoff(String businessId) =>
       (db.update(db.pendingSales)..where((t) => t.businessId.equals(businessId) & t.state.equals('pending'))).write(

@@ -74,22 +74,12 @@ class ProductTile extends StatelessWidget {
                   Text(subtitle, style: t.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
                 ],
                 const SizedBox(height: Space.xxs),
-                Row(
-                  children: [
-                    Flexible(
-                      child: StatusChip(
-                        p.trackStock ? '${p.quantityOnHand} ${p.unit}' : p.stockStatus.label,
-                        tone: stockTone(p.stockStatus),
-                      ),
-                    ),
-                    const SizedBox(width: Space.xs),
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: MoneyText(p.sellingPrice.format(currency), style: t.titleSmall),
-                      ),
-                    ),
-                  ],
+                // Price gets its own line so it is always fully readable, even with large system text.
+                MoneyText(p.sellingPrice.format(currency), style: t.titleMedium),
+                const SizedBox(height: Space.xxs),
+                StatusChip(
+                  p.trackStock ? '${p.quantityOnHand} ${p.unit} in stock' : p.stockStatus.label,
+                  tone: stockTone(p.stockStatus),
                 ),
               ],
             ),

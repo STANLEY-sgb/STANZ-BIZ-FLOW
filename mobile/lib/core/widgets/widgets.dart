@@ -442,18 +442,20 @@ class SkeletonList extends StatelessWidget {
   );
 }
 
+/// A money amount that is never truncated: if space is tight it scales down instead of
+/// ellipsising, because "UGX 65…" is worse than useless on a till.
 class MoneyText extends StatelessWidget {
-  const MoneyText(this.text, {super.key, this.style});
+  const MoneyText(this.text, {super.key, this.style, this.alignment = Alignment.centerLeft});
 
   final String text;
   final TextStyle? style;
+  final AlignmentGeometry alignment;
 
   @override
-  Widget build(BuildContext context) => Text(
-    text,
-    style: (style ?? Theme.of(context).textTheme.titleMedium!).tabular,
-    maxLines: 1,
-    overflow: TextOverflow.ellipsis,
+  Widget build(BuildContext context) => FittedBox(
+    fit: BoxFit.scaleDown,
+    alignment: alignment,
+    child: Text(text, style: (style ?? Theme.of(context).textTheme.titleMedium!).tabular, maxLines: 1, softWrap: false),
   );
 }
 

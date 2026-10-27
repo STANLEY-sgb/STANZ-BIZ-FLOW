@@ -299,7 +299,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         ),
                       ),
                       const SizedBox(height: Space.md),
-                      if (_trackStock)
+                      if (_trackStock) ...[
+                        // Two fields per row at most, so labels stay readable with large system text.
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -315,31 +316,25 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                               ),
                               const SizedBox(width: Space.sm),
                             ],
-                            Expanded(
-                              child: _field(
-                                'reorder',
-                                'Alert when below',
-                                keyboard: const TextInputType.numberWithOptions(decimal: true),
-                                formatters: _qtyInput,
-                              ),
-                            ),
-                            const SizedBox(width: Space.sm),
-                            SizedBox(width: 88, child: _field('unit', 'Unit')),
+                            Expanded(child: _field('unit', 'Unit', hint: 'pcs, kg, box')),
                           ],
                         ),
+                        _field(
+                          'reorder',
+                          'Low-stock alert level',
+                          helper: 'You will be warned when stock falls to this number.',
+                          keyboard: const TextInputType.numberWithOptions(decimal: true),
+                          formatters: _qtyInput,
+                        ),
+                      ],
                       if (_isEdit && _trackStock)
                         Text(
                           'To change quantities, use Adjust stock on the product page so every change is recorded.',
                           style: t.bodySmall,
                         ),
                       const SectionHeader('Codes'),
-                      Row(
-                        children: [
-                          Expanded(child: _field('sku', 'SKU (optional)')),
-                          const SizedBox(width: Space.sm),
-                          Expanded(child: _field('barcode', 'Barcode (optional)', keyboard: TextInputType.number)),
-                        ],
-                      ),
+                      _field('sku', 'SKU / item code (optional)'),
+                      _field('barcode', 'Barcode (optional)', keyboard: TextInputType.number),
                       const SizedBox(height: Space.xs),
                       AppCard(
                         padding: EdgeInsets.zero,

@@ -170,23 +170,48 @@ class _QueuedSaleCard extends ConsumerWidget {
               const SizedBox(height: Space.xs),
               Text(sale.lastErrorMessage ?? 'The server could not record this sale.', style: t.bodyMedium),
               if (advice != null) ...[const SizedBox(height: Space.xxs), Text(advice, style: t.bodySmall)],
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () async {
-                    final ok = await confirm(
-                      context,
-                      title: 'Remove this sale from the phone?',
-                      message:
-                          'It was NOT recorded by the server. If you took money for it, re-enter the sale or refund '
-                          'the customer first.',
-                      confirmLabel: 'Remove',
-                      destructive: true,
-                    );
-                    if (ok) await ref.read(localDbProvider).discardSale(sale.clientReference);
-                  },
-                  child: const Text('Remove after resolving'),
-                ),
+              const SizedBox(height: Space.xs),
+              Wrap(
+                alignment: WrapAlignment.end,
+                spacing: Space.xs,
+                children: [
+                  TextButton(
+                    style: TextButton.styleFrom(foregroundColor: BizColors.error),
+                    onPressed: () async {
+                      final ok = await confirm(
+                        context,
+                        title: 'Remove this sale from the phone?',
+                        message:
+                            'It was NOT recorded by the server. If you took money for it, re-enter the sale or refund '
+                            'the customer first.',
+                        confirmLabel: 'Remove',
+                        destructive: true,
+                      );
+                      if (ok) await ref.read(localDbProvider).discardSale(sale.clientReference);
+                    },
+                    child: const Text('Remove'),
+                  ),
+                  FilledButton.icon(
+                    onPressed: () async {
+                      await ref.read(offlineSyncProvider).retryRejected(sale.clientReference);
+                      final report = await ref.read(syncControllerProvider.notifier).run(refreshCatalog: true);
+                      if (!context.mounted || report == null) return;
+                      if (report.failed) {
+                        showMessage(context, 'Still offline. It will be retried automatically.', error: true);
+                      } else if (report.rejected > 0) {
+                        showMessage(
+                          context,
+                          'The server still could not record it. See the reason below.',
+                          error: true,
+                        );
+                      } else {
+                        showMessage(context, 'Sale recorded on the server');
+                      }
+                    },
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: const Text('Retry'),
+                  ),
+                ],
               ),
             ],
           ],

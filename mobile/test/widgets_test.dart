@@ -157,6 +157,28 @@ void main() {
     expect(find.text('UGX 650,000'), findsOneWidget);
   });
 
+  testWidgets('POS tile never truncates the price (found on a Samsung S21 at large font)', (tester) async {
+    await setSurface(tester, const Size(360, 780), textScale: 1.6);
+    await tester.pumpWidget(
+      harness(
+        Scaffold(
+          body: Padding(
+            padding: const EdgeInsets.all(16),
+            child: ProductTile(
+              product: testProduct(price: '1250000'),
+              currency: 'UGX',
+              trailing: const SizedBox.square(dimension: 36, child: Text('2')),
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+    // The full string is rendered (scaled if needed), never "UGX 1,25…".
+    final price = tester.widget<Text>(find.text('UGX 1,250,000'));
+    expect(price.overflow, isNot(TextOverflow.ellipsis));
+  });
+
   testWidgets('empty state exposes its action', (tester) async {
     var tapped = false;
     await tester.pumpWidget(

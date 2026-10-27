@@ -91,6 +91,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                     ],
                   ),
                 ),
+                const SizedBox(width: Space.sm),
                 Text(
                   v.format(currency),
                   style: (bold ? t.titleSmall! : t.bodyMedium!)
