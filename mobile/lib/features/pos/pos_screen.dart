@@ -14,6 +14,7 @@ import '../../core/theme/tokens.dart';
 import '../../core/widgets/widgets.dart';
 import '../../data/local/offline_providers.dart';
 import '../../data/models.dart';
+import '../customers/customers_screens.dart' show pickCustomer;
 import '../onboarding/onboarding_screens.dart' show paymentMethodLabels;
 import '../products/product_providers.dart';
 import '../products/product_widgets.dart';
@@ -250,6 +251,7 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   String? _method;
+  Customer? _customer;
   final _tendered = TextEditingController();
   final _reference = TextEditingController();
   final _discount = TextEditingController();
@@ -287,6 +289,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               reference: _reference.text.trim().isEmpty ? null : _reference.text.trim(),
             ),
           ],
+          customerId: _customer?.id,
         );
     try {
       final sale = await ref.read(apiProvider).createSale(b.id, request);
@@ -384,6 +387,28 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
                         onChanged: (v) => ref.read(cartProvider.notifier).setDiscount(Money.tryParse(v)),
                         decoration: InputDecoration(labelText: 'Discount (optional)', prefixText: '${b.currency} '),
+                      ),
+                    ],
+                    if (b.can(Perm.customersView)) ...[
+                      const SizedBox(height: Space.md),
+                      AppCard(
+                        padding: EdgeInsets.zero,
+                        child: ListTile(
+                          leading: const Icon(Icons.person_outline_rounded),
+                          title: Text(_customer?.name ?? 'Add customer (optional)'),
+                          subtitle: _customer?.phone == null ? null : Text(_customer!.phone!),
+                          trailing: _customer == null
+                              ? const Icon(Icons.chevron_right_rounded)
+                              : IconButton(
+                                  tooltip: 'Remove customer',
+                                  icon: const Icon(Icons.close_rounded),
+                                  onPressed: () => setState(() => _customer = null),
+                                ),
+                          onTap: () async {
+                            final picked = await pickCustomer(context, ref);
+                            if (picked != null) setState(() => _customer = picked);
+                          },
+                        ),
                       ),
                     ],
                     const SectionHeader('Payment'),

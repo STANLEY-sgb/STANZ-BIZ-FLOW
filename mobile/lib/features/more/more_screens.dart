@@ -36,6 +36,7 @@ class MoreScreen extends ConsumerWidget {
         [
           (Icons.receipt_long_outlined, 'Sales history', '/sales', can(Perm.salesCreate)),
           (Icons.cloud_sync_outlined, 'Offline sync', '/sync', can(Perm.salesCreate)),
+          (Icons.people_outline_rounded, 'Customers', '/customers', can(Perm.customersView)),
           (Icons.receipt_outlined, 'Expenses', '/expenses', can(Perm.expensesView)),
           (Icons.insights_rounded, 'Reports', '/reports', can(Perm.reportsView)),
         ],

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/bizflow_api.dart';
@@ -42,8 +44,12 @@ class SessionController extends Notifier<SessionState> {
   BizFlowApi get _api => ref.read(apiProvider);
   TokenStore get _tokens => ref.read(tokenStoreProvider);
 
+  Timer? _profileRetry;
+  int _profileAttempts = 0;
+
   @override
   SessionState build() {
+    ref.onDispose(() => _profileRetry?.cancel());
     ref.read(apiClientProvider).onSessionExpired = () => state = const SessionState.signedOut();
     Future.microtask(bootstrap);
     return const SessionState.unknown();
@@ -63,8 +69,31 @@ class SessionController extends Notifier<SessionState> {
       } else {
         // Offline at launch: keep the user signed in with what we can; screens show offline states.
         state = SessionState(status: SessionStatus.signedIn, activeBusinessId: await _tokens.readValue(_activeKey));
+        _scheduleProfileRetry();
       }
     }
+  }
+
+  /// After an offline start, keep trying to load the profile (name, memberships) until the
+  /// connection is back: 5 s, 10 s, 20 s … capped at 2 minutes.
+  void _scheduleProfileRetry() {
+    _profileRetry?.cancel();
+    final delay = Duration(seconds: (5 * (1 << _profileAttempts.clamp(0, 5))).clamp(5, 120));
+    _profileRetry = Timer(delay, () async {
+      if (state.status != SessionStatus.signedIn || state.user != null) return;
+      _profileAttempts++;
+      try {
+        await _loadProfile();
+        _profileAttempts = 0;
+      } on ApiError catch (e) {
+        if (e.isUnauthorized) {
+          await _tokens.clear();
+          state = const SessionState.signedOut();
+        } else {
+          _scheduleProfileRetry();
+        }
+      }
+    });
   }
 
   Future<void> _loadProfile() async {

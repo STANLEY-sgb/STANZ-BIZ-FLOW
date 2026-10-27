@@ -8,6 +8,7 @@ import '../../core/session.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/widgets/widgets.dart';
 import '../../data/models.dart';
+import 'product_import_screen.dart';
 import 'product_providers.dart';
 import 'product_widgets.dart';
 
@@ -62,7 +63,28 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
     final currency = business?.currency ?? '';
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.inventoryMode ? 'Inventory' : 'Products')),
+      appBar: AppBar(
+        title: Text(widget.inventoryMode ? 'Inventory' : 'Products'),
+        actions: [
+          if (!widget.inventoryMode)
+            PopupMenuButton<String>(
+              tooltip: 'Import or export',
+              icon: const Icon(Icons.more_vert_rounded),
+              onSelected: (v) => v == 'import' ? context.push('/products/import') : exportProducts(context, ref),
+              itemBuilder: (_) => [
+                if (canManage)
+                  const PopupMenuItem(
+                    value: 'import',
+                    child: ListTile(leading: Icon(Icons.upload_file_rounded), title: Text('Import from file')),
+                  ),
+                const PopupMenuItem(
+                  value: 'export',
+                  child: ListTile(leading: Icon(Icons.ios_share_rounded), title: Text('Export to CSV')),
+                ),
+              ],
+            ),
+        ],
+      ),
       floatingActionButton: canManage && !widget.inventoryMode
           ? FloatingActionButton.extended(
               onPressed: () => context.push('/products/new'),

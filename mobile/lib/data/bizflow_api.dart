@@ -105,6 +105,26 @@ class BizFlowApi {
   Future<Product> setArchived(String bid, String id, {required bool archived}) async =>
       Product.fromJson(await client.post<Json>('/businesses/$bid/products/$id/${archived ? 'archive' : 'restore'}'));
 
+  /// Dry run (default) returns a validation report; `dryRun: false` applies it in one transaction.
+  Future<ImportReport> importProducts(
+    String bid, {
+    required String filename,
+    required List<int> bytes,
+    bool dryRun = true,
+    bool updateExisting = false,
+    bool skipInvalid = false,
+  }) async => ImportReport.fromJson(
+    await client.postFile<Json>(
+      '/businesses/$bid/products/import',
+      field: 'file',
+      filename: filename,
+      bytes: bytes,
+      query: {'dry_run': dryRun, 'update_existing': updateExisting, 'skip_invalid': skipInvalid},
+    ),
+  );
+
+  Future<List<int>> exportProductsCsv(String bid) => client.getBytes('/businesses/$bid/products/export.csv');
+
   Future<StockMovement> adjustStock(String bid, String productId, Json body) async => StockMovement.fromJson(
     await client.post<Json>('/businesses/$bid/products/$productId/stock-movements', data: body),
   );
@@ -132,6 +152,19 @@ class BizFlowApi {
 
   Future<Json> returnItems(String bid, String saleId, Json body) =>
       client.post<Json>('/businesses/$bid/sales/$saleId/returns', data: body);
+
+  // --- Customers ----------------------------------------------------------
+
+  Future<PageResult<Customer>> customers(String bid, {String? q, int offset = 0}) async => PageResult.fromJson(
+    await client.get<Json>('/businesses/$bid/customers', query: {'q': q, 'offset': offset}),
+    Customer.fromJson,
+  );
+
+  Future<Customer> customer(String bid, String id) async =>
+      Customer.fromJson(await client.get<Json>('/businesses/$bid/customers/$id'));
+
+  Future<Customer> createCustomer(String bid, Json body) async =>
+      Customer.fromJson(await client.post<Json>('/businesses/$bid/customers', data: body));
 
   // --- Reports & expenses ---------------------------------------------------
 

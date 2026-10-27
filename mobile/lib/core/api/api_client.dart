@@ -104,6 +104,26 @@ class ApiClient {
 
   Future<T> patch<T>(String path, {Object? data}) => _wrap(() => dio.patch<dynamic>(path, data: data));
 
+  /// Multipart upload of a single file (e.g. product import).
+  Future<T> postFile<T>(
+    String path, {
+    required String field,
+    required String filename,
+    required List<int> bytes,
+    Map<String, dynamic>? query,
+  }) => _wrap(
+    () => dio.post<dynamic>(
+      path,
+      queryParameters: _clean(query),
+      data: FormData.fromMap({field: MultipartFile.fromBytes(bytes, filename: filename)}),
+      options: Options(sendTimeout: const Duration(seconds: 60), receiveTimeout: const Duration(seconds: 60)),
+    ),
+  );
+
+  /// Raw bytes of a download (e.g. CSV export).
+  Future<List<int>> getBytes(String path) =>
+      _wrap(() => dio.get<List<int>>(path, options: Options(responseType: ResponseType.bytes)));
+
   Future<void> delete(String path) => _wrap<dynamic>(() => dio.delete<dynamic>(path));
 
   static Map<String, dynamic>? _clean(Map<String, dynamic>? q) =>

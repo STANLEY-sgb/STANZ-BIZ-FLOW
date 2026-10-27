@@ -1,6 +1,6 @@
 # STANZ BizFlow — implementation plan & status
 
-_Last updated: 2026-10-28 (milestone 2 + device testing)_
+_Last updated: 2026-10-28 (milestone 3: import/export, customers)_
 
 ## Starting point
 
@@ -88,16 +88,36 @@ Issues found on the device and fixed in this milestone:
 - The Gradle heap was lowered from 8 GB to 3 GB (Kotlin compiled in-process). The template default had caused
   out-of-memory kills on this 12 GB machine.
 
+## Milestone 3 — product import/export and customers (delivered, device-tested)
+
+- **Import** (`POST /products/import`) for CSV or Excel (.xlsx), up to 5,000 rows / 2 MB. Common header spellings
+  are recognised ("Price", "Qty", "Buying price"…). A dry run reports every row (new / update / skip / error,
+  using spreadsheet row numbers) before anything is saved. Applying is a single transaction. Duplicate SKUs or
+  barcodes are caught. Categories are created as needed. Existing products are skipped unless "update existing"
+  is chosen, and stock differences are then recorded as stock-count movements. Plan limits are enforced, and
+  users without cost or IMEI permission cannot set those fields.
+- **Export** (`GET /products/export.csv`) in the same layout (it round-trips). Cost and IMEI columns depend on
+  role, spreadsheet formulas are neutralised, and a UTF-8 BOM is added so Excel opens it correctly.
+- **Mobile:** an import screen (pick file → review → confirm), export through the Android share sheet,
+  a customers list and detail screen (purchases and total spent), and an optional customer picker at checkout
+  with quick-add.
+- **Tests:** 9 backend import/export tests; mobile model and session tests.
+- **Device test (S21):** picked a real CSV from Downloads, got the 5-new / 2-error report, imported the valid
+  rows; exported via the share sheet; added a customer at checkout, and the receipt and customer stats were
+  verified on the server.
+- **Found on the device and fixed:** after an offline start, the app never reloaded the user's profile, so
+  their name and business list stayed missing. It now retries with backoff, and a test covers it.
+- **Build fix (Windows):** turned off Kotlin incremental compilation, which crashes when plugin sources (Pub
+  cache on C:) and the project (E:) are on different drives.
+
 ## Next milestones (recommended order)
 
-1. **Product import/export:** CSV/Excel upload with preview, column mapping, row errors and an asynchronous job for large files.
-2. **Product photos and receipt logo:** object storage, signed URLs and upload validation.
-3. **Camera barcode scanning** (hardware/Bluetooth scanners already work through the search field).
-4. **Customer screens in the app** (the API is done) and customer selection at checkout.
-5. **Email provider** (SMTP is implemented and needs credentials), email verification.
-6. **Billing provider** after choosing one (e.g. a Ugandan mobile money aggregator for web billing) and reviewing Google Play / App Store rules for in-app digital subscriptions.
-7. **Hardening:** PostgreSQL Row-Level Security as a second isolation layer, Redis-backed rate limiting for multi-instance deployments, load testing, crash reporting (Sentry or Firebase Crashlytics).
-8. **Brand assets:** final app icon and splash (the in-app logo mark is drawn in code for now), store screenshots.
+1. **Product photos and receipt logo:** object storage, signed URLs and upload validation.
+2. **Camera barcode scanning** (hardware/Bluetooth scanners already work through the search field).
+3. **Email provider** (SMTP is implemented and needs credentials), email verification.
+4. **Billing provider** after choosing one (e.g. a Ugandan mobile money aggregator for web billing) and reviewing Google Play / App Store rules for in-app digital subscriptions.
+5. **Hardening:** asynchronous jobs for very large imports, PostgreSQL Row-Level Security as a second isolation layer, Redis-backed rate limiting for multi-instance deployments, load testing, crash reporting (Sentry or Firebase Crashlytics).
+6. **Brand assets:** final app icon and splash (the in-app logo mark is drawn in code for now), store screenshots.
 
 ## Known limitations (honest status)
 

@@ -598,3 +598,110 @@ String humanize(String code) {
   final s = code.replaceAll('_', ' ');
   return s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 }
+
+class ImportIssue {
+  const ImportIssue({required this.row, required this.column, required this.message});
+
+  final int row;
+  final String column;
+  final String message;
+
+  factory ImportIssue.fromJson(Map<String, dynamic> j) =>
+      ImportIssue(row: int.parse('${j['row']}'), column: j['column'] as String, message: j['message'] as String);
+}
+
+class ImportPreviewRow {
+  const ImportPreviewRow({required this.row, required this.action, this.name, this.price, this.quantity, this.message});
+
+  final int row;
+  final String action; // create | update | skip | error
+  final String? name;
+  final Money? price;
+  final String? quantity;
+  final String? message;
+
+  factory ImportPreviewRow.fromJson(Map<String, dynamic> j) => ImportPreviewRow(
+    row: j['row'] as int,
+    action: j['action'] as String,
+    name: j['name'] as String?,
+    price: _moneyOrNull(j['selling_price']),
+    quantity: j['quantity'] as String?,
+    message: j['message'] as String?,
+  );
+}
+
+class ImportReport {
+  const ImportReport({
+    required this.dryRun,
+    required this.totalRows,
+    required this.toCreate,
+    required this.toUpdate,
+    required this.skipped,
+    required this.invalid,
+    required this.errors,
+    required this.preview,
+    required this.created,
+    required this.updated,
+    required this.planLimitExceeded,
+  });
+
+  final bool dryRun;
+  final int totalRows;
+  final int toCreate;
+  final int toUpdate;
+  final int skipped;
+  final int invalid;
+  final List<ImportIssue> errors;
+  final List<ImportPreviewRow> preview;
+  final int created;
+  final int updated;
+  final bool planLimitExceeded;
+
+  int get importable => toCreate + toUpdate;
+
+  factory ImportReport.fromJson(Map<String, dynamic> j) => ImportReport(
+    dryRun: j['dry_run'] as bool,
+    totalRows: j['total_rows'] as int,
+    toCreate: j['to_create'] as int,
+    toUpdate: j['to_update'] as int,
+    skipped: j['skipped'] as int,
+    invalid: j['invalid'] as int,
+    errors: (j['errors'] as List).cast<Map<String, dynamic>>().map(ImportIssue.fromJson).toList(),
+    preview: (j['preview'] as List).cast<Map<String, dynamic>>().map(ImportPreviewRow.fromJson).toList(),
+    created: j['created'] as int,
+    updated: j['updated'] as int,
+    planLimitExceeded: j['plan_limit_exceeded'] as bool,
+  );
+}
+
+class Customer {
+  const Customer({
+    required this.id,
+    required this.name,
+    this.phone,
+    this.email,
+    this.notes,
+    this.salesCount,
+    this.totalSpent,
+  });
+
+  final String id;
+  final String name;
+  final String? phone;
+  final String? email;
+  final String? notes;
+
+  /// Only present on the detail endpoint.
+  final int? salesCount;
+  final Money? totalSpent;
+
+  factory Customer.fromJson(Map<String, dynamic> j) => Customer(
+    id: j['id'] as String,
+    name: j['name'] as String,
+    phone: j['phone'] as String?,
+    email: j['email'] as String?,
+    notes: j['notes'] as String?,
+    salesCount: j['sales_count'] as int?,
+    totalSpent: _moneyOrNull(j['total_spent']),
+  );
+}

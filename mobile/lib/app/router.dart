@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/session.dart';
 import '../features/auth/auth_screens.dart';
+import '../features/customers/customers_screens.dart';
 import '../features/dashboard/dashboard_screen.dart';
 import '../features/expenses/expenses_screens.dart';
 import '../features/more/more_screens.dart';
@@ -12,6 +13,7 @@ import '../features/onboarding/onboarding_screens.dart';
 import '../features/pos/pos_screen.dart';
 import '../features/products/product_detail_screen.dart';
 import '../features/products/product_form_screen.dart';
+import '../features/products/product_import_screen.dart';
 import '../features/products/products_screen.dart';
 import '../features/reports/reports_screen.dart';
 import '../features/sales/sales_screens.dart';
@@ -74,6 +76,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       page('/select-business', (_) => const SelectBusinessScreen()),
       page('/invite', (s) => AcceptInvitationScreen(initialToken: s.uri.queryParameters['token'])),
       page('/products/new', (_) => const ProductFormScreen()),
+      page('/products/import', (_) => const ProductImportScreen()),
       page('/products/:id', (s) => ProductDetailScreen(productId: s.pathParameters['id']!)),
       page('/products/:id/edit', (s) => ProductFormScreen(productId: s.pathParameters['id'])),
       page('/sell/cart', (_) => const CheckoutScreen()),
@@ -89,6 +92,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       page('/subscription', (_) => const SubscriptionScreen()),
       page('/settings', (_) => const BusinessSettingsScreen()),
       page('/sync', (_) => const SyncScreen()),
+      page('/customers', (_) => const CustomersScreen()),
+      page('/customers/:id', (s) => CustomerDetailScreen(customerId: s.pathParameters['id']!)),
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => AppShell(shell: shell),
         branches: [

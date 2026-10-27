@@ -17,6 +17,7 @@ from app.modules import (
     customers,
     expenses,
     health,
+    product_import,
     products,
     reports,
     sales,
@@ -70,7 +71,20 @@ def create_app() -> FastAPI:
         return response
 
     app.include_router(health.router)
-    for module in (auth, businesses, subscriptions, products, sales, customers, expenses, reports, sync, audit):
+    # product_import before products so /products/export.csv is not captured by /products/{product_id}.
+    for module in (
+        auth,
+        businesses,
+        subscriptions,
+        product_import,
+        products,
+        sales,
+        customers,
+        expenses,
+        reports,
+        sync,
+        audit,
+    ):
         app.include_router(module.router, prefix=settings.api_prefix)
     return app
 

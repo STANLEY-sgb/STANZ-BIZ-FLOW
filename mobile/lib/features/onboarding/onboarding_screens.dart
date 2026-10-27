@@ -456,8 +456,8 @@ class SetupChecklistScreen extends ConsumerWidget {
                   _ChecklistItem(
                     icon: Icons.upload_file_rounded,
                     title: 'Import a product list',
-                    subtitle: 'CSV/Excel import is coming soon — add products one by one for now.',
-                    enabled: false,
+                    subtitle: 'Already have your stock in Excel or CSV? Bring it in at once.',
+                    onTap: () => context.push('/products/import'),
                   ),
                   _ChecklistItem(
                     icon: Icons.group_add_rounded,
@@ -489,7 +489,6 @@ class _ChecklistItem extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.onTap,
-    this.enabled = true,
     this.done = false,
   });
 
@@ -497,46 +496,36 @@ class _ChecklistItem extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback? onTap;
-  final bool enabled;
   final bool done;
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: Space.sm),
-    child: Opacity(
-      opacity: enabled ? 1 : 0.55,
-      child: AppCard(
-        onTap: enabled ? onTap : null,
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(Space.xs),
-              decoration: BoxDecoration(
-                color: BizColors.primaryContainer,
-                borderRadius: BorderRadius.circular(Radii.sm),
-              ),
-              child: Icon(
-                done ? Icons.check_rounded : icon,
-                color: done ? BizColors.success : BizColors.primaryPressed,
-              ),
+    child: AppCard(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(Space.xs),
+            decoration: BoxDecoration(color: BizColors.primaryContainer, borderRadius: BorderRadius.circular(Radii.sm)),
+            child: Icon(done ? Icons.check_rounded : icon, color: done ? BizColors.success : BizColors.primaryPressed),
+          ),
+          const SizedBox(width: Space.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: 2),
+                Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+              ],
             ),
-            const SizedBox(width: Space.sm),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: Theme.of(context).textTheme.titleSmall),
-                  const SizedBox(height: 2),
-                  Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
-                ],
-              ),
-            ),
-            if (done)
-              const StatusChip('Done', tone: Tone.success)
-            else if (enabled)
-              const Icon(Icons.chevron_right_rounded, color: BizColors.textSecondary),
-          ],
-        ),
+          ),
+          if (done)
+            const StatusChip('Done', tone: Tone.success)
+          else
+            const Icon(Icons.chevron_right_rounded, color: BizColors.textSecondary),
+        ],
       ),
     ),
   );
