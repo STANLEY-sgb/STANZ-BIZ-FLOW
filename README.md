@@ -41,7 +41,7 @@ Release builds must point `API_BASE_URL` at an **HTTPS** endpoint. Plain HTTP is
 ```bash
 cd backend && .venv/Scripts/python -m pytest -q        # 65 tests (SQLite)
 TEST_DATABASE_URL=postgresql+psycopg://…/bizflow_test pytest -q   # same suite + concurrency test on PostgreSQL
-cd mobile && flutter analyze && flutter test            # 28 tests
+cd mobile && flutter analyze && flutter test            # 34 tests
 ```
 
 CI (`.github/workflows/ci.yml`) runs lint, both backend test modes, a dependency audit, and the Flutter analyze and test steps.

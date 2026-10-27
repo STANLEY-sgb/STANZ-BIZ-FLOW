@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/theme/tokens.dart';
+import '../data/local/offline_providers.dart';
+import '../features/dashboard/dashboard_screen.dart';
+import '../features/products/product_providers.dart';
+import '../features/sales/sales_screens.dart';
 
 /// Main navigation: bottom bar on phones, navigation rail on tablets.
-class AppShell extends StatelessWidget {
+/// Also owns the background sync engine for the signed-in business.
+class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.shell});
 
   final StatefulNavigationShell shell;
@@ -17,10 +23,34 @@ class AppShell extends StatelessWidget {
     (Icons.menu_rounded, Icons.menu_open_rounded, 'More'),
   ];
 
+  @override
+  ConsumerState<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends ConsumerState<AppShell> {
+  StatefulNavigationShell get shell => widget.shell;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.read(syncControllerProvider.notifier).start();
+    });
+  }
+
   void _go(int i) => shell.goBranch(i, initialLocation: i == shell.currentIndex);
 
   @override
   Widget build(BuildContext context) {
+    // When queued offline sales reach the server, refresh figures that depend on them.
+    ref.listen(syncControllerProvider.select((s) => s.lastReport), (_, report) {
+      if (report != null && report.changedServerData) {
+        invalidateCatalog(ref);
+        ref.invalidate(dashboardProvider);
+        ref.invalidate(salesProvider);
+      }
+    });
+    final destinations = AppShell.destinations;
     final wide = MediaQuery.sizeOf(context).width >= 840;
     if (wide) {
       return Scaffold(

@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/api/api_error.dart';
 import '../../core/session.dart';
+import '../../data/local/offline_providers.dart';
 import '../../data/models.dart';
 
 typedef ProductQuery = ({String q, String? categoryId, String? stock, int limit});
@@ -35,9 +37,25 @@ final productMovementsProvider = FutureProvider.autoDispose.family<PageResult<St
   return ref.watch(apiProvider).movements(bid, productId: id);
 });
 
+typedef PosCatalog = ({List<Product> items, bool offline, DateTime? syncedAt});
+
+/// Products for the till: live from the server, or the last-synced local copy when offline.
+final posCatalogProvider = FutureProvider.autoDispose.family<PosCatalog, String>((ref, q) async {
+  final bid = ref.watch(activeBusinessIdProvider);
+  try {
+    final page = await ref.watch(apiProvider).products(bid, q: q.trim().isEmpty ? null : q.trim(), limit: 40);
+    return (items: page.items, offline: false, syncedAt: null);
+  } on ApiError catch (e) {
+    if (!e.isNetwork) rethrow;
+    final offline = ref.read(offlineSyncProvider);
+    return (items: await offline.searchCached(bid, q), offline: true, syncedAt: await offline.productsSyncedAt(bid));
+  }
+});
+
 /// Call after any product or stock change so every list and detail view refreshes.
 void invalidateCatalog(WidgetRef ref) {
   ref.invalidate(productListProvider);
+  ref.invalidate(posCatalogProvider);
   ref.invalidate(productProvider);
   ref.invalidate(productMovementsProvider);
   ref.invalidate(categoriesProvider);

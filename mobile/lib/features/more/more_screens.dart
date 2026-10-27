@@ -8,6 +8,7 @@ import '../../core/api/api_error.dart';
 import '../../core/session.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/widgets/widgets.dart';
+import '../../data/local/offline_providers.dart';
 import '../../data/models.dart';
 
 const roleLabels = {
@@ -34,6 +35,7 @@ class MoreScreen extends ConsumerWidget {
         'Business',
         [
           (Icons.receipt_long_outlined, 'Sales history', '/sales', can(Perm.salesCreate)),
+          (Icons.cloud_sync_outlined, 'Offline sync', '/sync', can(Perm.salesCreate)),
           (Icons.receipt_outlined, 'Expenses', '/expenses', can(Perm.expensesView)),
           (Icons.insights_rounded, 'Reports', '/reports', can(Perm.reportsView)),
         ],
@@ -118,10 +120,14 @@ class MoreScreen extends ConsumerWidget {
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(foregroundColor: BizColors.error),
                   onPressed: () async {
+                    final waiting = (ref.read(unresolvedSalesProvider).value ?? const []).length;
                     if (await confirm(
                       context,
                       title: 'Sign out?',
-                      message: 'You will need your password to sign in again.',
+                      message: waiting == 0
+                          ? 'You will need your password to sign in again.'
+                          : '$waiting offline sales are not on the server yet. They stay safely on this phone '
+                                'and sync the next time you sign in.',
                       confirmLabel: 'Sign out',
                     )) {
                       await ref.read(sessionProvider.notifier).logout();

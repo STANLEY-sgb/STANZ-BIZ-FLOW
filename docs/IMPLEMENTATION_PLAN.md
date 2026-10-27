@@ -1,6 +1,6 @@
 # STANZ BizFlow — implementation plan & status
 
-_Last updated: 2026-10-27 (milestone 1)_
+_Last updated: 2026-10-27 (milestone 2: offline selling)_
 
 ## Starting point
 
@@ -47,10 +47,20 @@ uses the brief's starting values, adjusted for contrast (see Design system below
 - Sales history, expenses, reports with a date range, team, plan & usage, business settings
 - Bottom navigation on phones, navigation rail on tablets; layouts tested at 320 px width, 1.6× text and tablet size
 
+## Milestone 2 — offline selling (delivered, 34 mobile tests passing)
+
+- Drift/SQLite store on the device: product catalogue cache, business profile cache, durable sale queue
+- POS falls back to the saved catalogue (barcode scans included) with an "as of last sync" banner
+- Checkout queues the sale under the same idempotency key when the network fails, so it cannot be duplicated
+- Background sync on start-up, on reconnect, every minute and on demand, with bounded exponential backoff
+- Offline sync screen showing pending and rejected sales, the server's reason, and what to do next
+- Queued sales are tied to the cashier who made them (safe on shared phones); sign-out warns about unsynced sales
+- Tests: paging catalogue refresh, offline search and scan, idempotent re-queue (this caught and fixed a
+  double stock decrement), accepted/duplicate/rejected handling, backoff, and per-user scoping
+
 ## Next milestones (recommended order)
 
-1. **Offline mode (Phase 7):** Drift/SQLite product cache and a sale queue on the device, built on the existing `/sync/sales` contract (see OFFLINE_SYNC.md). Until this lands, a sale needs connectivity at the moment of checkout.
-2. **Product import/export:** CSV/Excel upload with preview, column mapping, row errors and an asynchronous job for large files.
+1. **Product import/export:** CSV/Excel upload with preview, column mapping, row errors and an asynchronous job for large files.
 3. **Product photos and receipt logo:** object storage, signed URLs and upload validation.
 4. **Camera barcode scanning** (hardware/Bluetooth scanners already work through the search field).
 5. **Customer screens in the app** (the API is done) and customer selection at checkout.
@@ -63,7 +73,9 @@ uses the brief's starting values, adjusted for contrast (see Design system below
 
 - **No PostgreSQL run yet.** No PostgreSQL server was available on this machine, and running downloaded PostgreSQL binaries was blocked by the tool sandbox. The full suite passes on SQLite, the migration renders valid PostgreSQL DDL, and CI is configured to run the suite (including the concurrent-oversell test) on PostgreSQL 17. That test has **not been executed yet**.
 - **Mobile app not yet run on a device or emulator against a live API.** The Dart code compiles: `flutter analyze` is clean and 28 tests pass. The first Android debug APK build was stopped because the machine ran low on memory, so a full Gradle build has not completed yet. iOS was not built: that needs macOS and Xcode.
-- **Offline sales are not yet queued on the device.** The server side is ready; the client queue is the next milestone. A network error during checkout keeps the same idempotency key, so pressing "Complete sale" again is safe. Editing the cart after an error starts a new sale.
+- **Offline covers sales only.** Product edits, stock adjustments, expenses and returns need a connection (see OFFLINE_SYNC.md).
+- The offline flow is unit-tested against a fake server and an in-memory SQLite database. It has not yet been
+  tried on a real phone in airplane mode.
 - Emails are not delivered until SMTP credentials are configured. The API reports `email_delivered: false` and never claims otherwise.
 - No real payment processing. Payments are *recorded*, not charged.
 - Rate limiting is in-memory (per process). Use a shared store before running multiple API replicas.

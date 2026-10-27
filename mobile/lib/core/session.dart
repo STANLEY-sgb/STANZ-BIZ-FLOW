@@ -5,6 +5,7 @@ import '../data/models.dart';
 import 'api/api_client.dart';
 import 'api/api_error.dart';
 import 'api/token_store.dart';
+import '../data/local/offline_providers.dart';
 
 final tokenStoreProvider = Provider<TokenStore>((ref) => SecureTokenStore());
 
@@ -123,10 +124,23 @@ class SessionController extends Notifier<SessionState> {
 final sessionProvider = NotifierProvider<SessionController, SessionState>(SessionController.new);
 
 /// Full details (role, permissions, settings) of the active business.
+///
+/// The last good copy is cached on the device so selling keeps working offline;
+/// the server still re-checks every permission when queued sales sync.
 final currentBusinessProvider = FutureProvider<Business>((ref) async {
   final id = ref.watch(sessionProvider.select((s) => s.activeBusinessId));
   if (id == null) throw const ApiError(code: 'no_business', message: 'No business selected.');
-  return ref.watch(apiProvider).business(id);
+  final offline = ref.watch(offlineSyncProvider);
+  try {
+    final json = await ref.watch(apiClientProvider).get<Json>('/businesses/$id');
+    await offline.cacheBusiness(json);
+    return Business.fromJson(json);
+  } on ApiError catch (e) {
+    if (!e.isNetwork) rethrow;
+    final cached = await offline.cachedBusiness(id);
+    if (cached == null) rethrow;
+    return cached;
+  }
 });
 
 /// Synchronous access to the active business id for feature providers.

@@ -15,6 +15,7 @@ import '../features/products/product_form_screen.dart';
 import '../features/products/products_screen.dart';
 import '../features/reports/reports_screen.dart';
 import '../features/sales/sales_screens.dart';
+import '../features/sync/sync_screen.dart';
 import 'shell.dart';
 
 const _publicRoutes = {'/welcome', '/login', '/register', '/forgot-password'};
@@ -87,6 +88,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       page('/team', (_) => const TeamScreen()),
       page('/subscription', (_) => const SubscriptionScreen()),
       page('/settings', (_) => const BusinessSettingsScreen()),
+      page('/sync', (_) => const SyncScreen()),
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => AppShell(shell: shell),
         branches: [

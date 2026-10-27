@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../core/api/api_error.dart';
 import '../../core/money.dart';
@@ -11,6 +12,7 @@ import '../../core/session.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/widgets/widgets.dart';
+import '../../data/local/offline_providers.dart';
 import '../../data/models.dart';
 import '../onboarding/onboarding_screens.dart' show paymentMethodLabels;
 import '../products/product_providers.dart';
@@ -28,7 +30,7 @@ class PosScreen extends ConsumerStatefulWidget {
 class _PosScreenState extends ConsumerState<PosScreen> {
   final _search = TextEditingController();
   Timer? _debounce;
-  ProductQuery _query = defaultProductQuery;
+  String _query = '';
 
   @override
   void dispose() {
@@ -39,23 +41,23 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   void _onSearch(String v) {
     _debounce?.cancel();
-    _debounce = Timer(
-      const Duration(milliseconds: 250),
-      () => setState(() => _query = (q: v, categoryId: null, stock: null, limit: 40)),
-    );
+    _debounce = Timer(const Duration(milliseconds: 250), () => setState(() => _query = v));
   }
 
   /// Hardware/Bluetooth barcode scanners type the code and press Enter.
   Future<void> _onSubmitted(Business b, String code) async {
     if (code.trim().isEmpty) return;
+    Product? p;
     try {
-      final p = await ref.read(apiProvider).lookup(b.id, code.trim());
-      _add(b, p);
-      _search.clear();
-      _onSearch('');
-    } on ApiError {
-      // Not an exact code: leave the text as a normal search.
+      p = await ref.read(apiProvider).lookup(b.id, code.trim());
+    } on ApiError catch (e) {
+      // Offline: use the saved catalogue. Otherwise it is not an exact code, so keep it as a search.
+      if (e.isNetwork) p = await ref.read(offlineSyncProvider).cachedByCode(b.id, code.trim());
     }
+    if (p == null || !mounted) return;
+    _add(b, p);
+    _search.clear();
+    _onSearch('');
   }
 
   void _add(Business b, Product p) {
@@ -76,6 +78,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       appBar: AppBar(
         title: const Text('New sale'),
         actions: [
+          const SyncBadge(),
           IconButton(
             tooltip: 'Sales history',
             icon: const Icon(Icons.receipt_long_outlined),
@@ -93,7 +96,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               message: 'Ask the business owner to give you cashier access.',
             );
           }
-          final products = ref.watch(productListProvider(_query));
+          final catalog = ref.watch(posCatalogProvider(_query));
           return Column(
             children: [
               PageBody(
@@ -108,19 +111,26 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   ),
                 ),
               ),
+              if (catalog.value case final c? when c.offline) _OfflineBanner(syncedAt: c.syncedAt),
               const SizedBox(height: Space.xs),
               Expanded(
                 child: AsyncView(
-                  value: products,
-                  onRetry: () => ref.invalidate(productListProvider(_query)),
+                  value: catalog,
+                  onRetry: () => ref.invalidate(posCatalogProvider(_query)),
                   data: (page) => page.items.isEmpty
                       ? EmptyState(
-                          icon: Icons.search_off_rounded,
-                          title: _query.q.isEmpty ? 'No products to sell yet' : 'No matches',
-                          message: _query.q.isEmpty
-                              ? 'Add products first, then come back to sell.'
-                              : 'Try another name or code.',
-                          actionLabel: _query.q.isEmpty && b.can(Perm.productsManage) ? 'Add a product' : null,
+                          icon: page.offline ? Icons.cloud_off_rounded : Icons.search_off_rounded,
+                          title: page.offline
+                              ? 'No saved products'
+                              : (_query.isEmpty ? 'No products to sell yet' : 'No matches'),
+                          message: page.offline
+                              ? 'Connect once so BizFlow can save your products on this phone for offline selling.'
+                              : (_query.isEmpty
+                                    ? 'Add products first, then come back to sell.'
+                                    : 'Try another name or code.'),
+                          actionLabel: !page.offline && _query.isEmpty && b.can(Perm.productsManage)
+                              ? 'Add a product'
+                              : null,
                           onAction: () => context.push('/products/new'),
                         )
                       : ListView.separated(
@@ -265,16 +275,43 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       invalidateCatalog(ref);
       if (mounted) context.pushReplacement('/sales/${sale['id']}?new=1');
     } on ApiError catch (e) {
-      // The checkout reference is kept, so pressing "Complete sale" again is a safe retry.
-      setState(
-        () => _error = e.isNetwork
-            ? "Couldn't reach the server. Your sale is not lost — tap Complete sale again to retry safely."
-            : e.message,
-      );
+      if (e.isNetwork) {
+        await _saveOffline(b, cart, request);
+        return;
+      }
+      setState(() => _error = e.message);
       if (e.code == 'price_changed' || e.code == 'insufficient_stock') invalidateCatalog(ref);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// No connection: queue the sale under the SAME idempotency key. If the first request actually
+  /// reached the server, the later sync is answered as a duplicate, so nothing is recorded twice.
+  Future<void> _saveOffline(Business b, Cart cart, Map<String, Object?> request) async {
+    try {
+      final userId = await ref.read(currentUserIdProvider.future);
+      if (userId == null) throw StateError('signed out');
+      await ref
+          .read(offlineSyncProvider)
+          .enqueueSale(
+            businessId: b.id,
+            userId: userId,
+            deviceId: await ref.read(deviceIdProvider.future),
+            saleRequest: request,
+            previewTotal: cart.total,
+            summary: describeCart(cart),
+          );
+    } on Object {
+      if (mounted) setState(() => _error = 'Could not save the sale on this phone. Please try again.');
+      return;
+    }
+    unawaited(HapticFeedback.mediumImpact());
+    ref.read(cartProvider.notifier).clear();
+    invalidateCatalog(ref);
+    if (!mounted) return;
+    showMessage(context, 'No connection. Sale saved on this phone and will sync automatically.');
+    context.pushReplacement('/sync');
   }
 
   @override
@@ -476,6 +513,67 @@ class _TotalRow extends StatelessWidget {
           Expanded(child: Text(label, style: style)),
           Text(value, style: style!.tabular),
         ],
+      ),
+    );
+  }
+}
+
+String describeCart(Cart cart) => cart.lines
+    .map((l) => l.quantity == Quantity.whole(1) ? l.product.name : '${l.quantity}× ${l.product.name}')
+    .join(', ');
+
+class _OfflineBanner extends StatelessWidget {
+  const _OfflineBanner({required this.syncedAt});
+
+  final DateTime? syncedAt;
+
+  @override
+  Widget build(BuildContext context) => PageBody(
+    padding: const EdgeInsets.fromLTRB(Space.page, Space.xs, Space.page, 0),
+    child: Semantics(
+      liveRegion: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: Space.sm, vertical: Space.xs),
+        decoration: BoxDecoration(color: BizColors.warningContainer, borderRadius: Radii.control),
+        child: Row(
+          children: [
+            const Icon(Icons.cloud_off_rounded, color: BizColors.warning, size: 20),
+            const SizedBox(width: Space.xs),
+            Expanded(
+              child: Text(
+                syncedAt == null
+                    ? 'Offline. Showing saved products; stock may be out of date.'
+                    : 'Offline. Products and stock as of ${DateFormat.MMMd().add_jm().format(syncedAt!)}. '
+                          'Sales will sync when you reconnect.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: BizColors.textPrimary),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+/// App-bar indicator of sales waiting to sync (or needing review).
+class SyncBadge extends ConsumerWidget {
+  const SyncBadge({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unresolved = ref.watch(unresolvedSalesProvider).value ?? const [];
+    final running = ref.watch(syncControllerProvider.select((s) => s.running));
+    final rejected = unresolved.where((s) => s.state == 'rejected').length;
+    if (unresolved.isEmpty && !running) return const SizedBox.shrink();
+    final label = rejected > 0 ? '$rejected sales need review' : '${unresolved.length} sales waiting to sync';
+    return IconButton(
+      tooltip: running ? 'Syncing…' : label,
+      onPressed: () => context.push('/sync'),
+      icon: Badge(
+        isLabelVisible: unresolved.isNotEmpty,
+        label: Text('${unresolved.length}'),
+        backgroundColor: rejected > 0 ? BizColors.error : BizColors.primary,
+        child: Icon(running ? Icons.sync_rounded : Icons.cloud_upload_outlined),
       ),
     );
   }
