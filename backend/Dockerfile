@@ -10,7 +10,7 @@ COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini .
 
-RUN useradd --create-home --uid 10001 bizflow
+RUN useradd --create-home --uid 10001 bizflow && mkdir -p /data/uploads && chown bizflow /data/uploads
 USER bizflow
 
 EXPOSE 8000

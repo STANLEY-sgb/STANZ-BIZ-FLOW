@@ -12,6 +12,9 @@ const apiBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://
 
 typedef SessionExpiredCallback = void Function();
 
+/// Turns a server-relative file path (e.g. "/api/v1/files/…?sig=…") into an absolute URL.
+String? fileUrl(String? path) => path == null ? null : Uri.parse(apiBaseUrl).resolve(path).toString();
+
 /// HTTP client with bearer auth and single-flight token refresh.
 class ApiClient {
   ApiClient({required this.tokens, Dio? dio, String baseUrl = apiBaseUrl})
@@ -123,6 +126,8 @@ class ApiClient {
   /// Raw bytes of a download (e.g. CSV export).
   Future<List<int>> getBytes(String path) =>
       _wrap(() => dio.get<List<int>>(path, options: Options(responseType: ResponseType.bytes)));
+
+  Future<Map<String, dynamic>> deleteJson(String path) => _wrap(() => dio.delete<dynamic>(path));
 
   Future<void> delete(String path) => _wrap<dynamic>(() => dio.delete<dynamic>(path));
 

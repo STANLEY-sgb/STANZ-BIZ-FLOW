@@ -19,6 +19,7 @@ from app.core.mailer import send_email
 from app.core.permissions import Permission, Role, permissions_for
 from app.core.plans import Feature
 from app.core.security import hash_token, new_opaque_token
+from app.core.storage import signed_url
 from app.models import Business, Category, Invitation, Membership, User
 from app.modules import audit, subscriptions
 
@@ -108,6 +109,7 @@ class BusinessOut(BaseModel):
     email: str | None
     address: str | None
     receipt_footer: str | None
+    logo_url: str | None = None
     tax_rate_percent: Decimal
     enforce_stock: bool
     payment_methods: list[str]
@@ -176,6 +178,7 @@ def business_out(b: Business) -> BusinessOut:
         **data,
         payment_methods=[m for m in b.payment_methods.split(",") if m],
         onboarding_completed=b.onboarding_completed_at is not None,
+        logo_url=signed_url(b.logo_file_id),
     )
 
 

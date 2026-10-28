@@ -1,3 +1,4 @@
+import '../core/api/api_client.dart' show fileUrl;
 import '../core/money.dart';
 
 DateTime _date(Object? v) => DateTime.parse(v as String).toLocal();
@@ -62,6 +63,7 @@ class Business {
     this.address,
     this.receiptFooter,
     this.taxRatePercent = '0',
+    this.logoUrl,
   });
 
   final String id;
@@ -80,6 +82,7 @@ class Business {
   final String? address;
   final String? receiptFooter;
   final String taxRatePercent;
+  final String? logoUrl;
 
   /// UI hint only; the server enforces every permission.
   bool can(String permission) => permissions.contains(permission);
@@ -101,6 +104,7 @@ class Business {
     address: j['address'] as String?,
     receiptFooter: j['receipt_footer'] as String?,
     taxRatePercent: '${j['tax_rate_percent']}',
+    logoUrl: fileUrl(j['logo_url'] as String?),
   );
 }
 
@@ -166,6 +170,7 @@ class Product {
     this.categoryId,
     this.description,
     this.attributes = const {},
+    this.imageUrl,
   });
 
   final String id;
@@ -185,6 +190,9 @@ class Product {
   final String? categoryId;
   final String? description;
   final Map<String, dynamic> attributes;
+
+  /// Absolute, signed and expiring link to the product photo, or null.
+  final String? imageUrl;
 
   String? get brand => attributes['brand'] as String?;
 
@@ -214,6 +222,7 @@ class Product {
     categoryId: j['category_id'] as String?,
     description: j['description'] as String?,
     attributes: (j['attributes'] as Map?)?.cast<String, dynamic>() ?? const {},
+    imageUrl: fileUrl(j['image_url'] as String?),
   );
 }
 
@@ -358,6 +367,7 @@ class Receipt {
     this.businessAddress,
     this.customerName,
     this.footer,
+    this.logoUrl,
   });
 
   final String businessName;
@@ -380,6 +390,7 @@ class Receipt {
   final String? businessAddress;
   final String? customerName;
   final String? footer;
+  final String? logoUrl;
 
   factory Receipt.fromJson(Map<String, dynamic> j) => Receipt(
     businessName: j['business_name'] as String,
@@ -402,6 +413,7 @@ class Receipt {
     businessAddress: j['business_address'] as String?,
     customerName: j['customer_name'] as String?,
     footer: j['footer'] as String?,
+    logoUrl: fileUrl(j['logo_url'] as String?),
   );
 }
 

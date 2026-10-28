@@ -16,6 +16,7 @@ from app.api.pagination import Page, Paging, paginate
 from app.core.errors import AppError, Conflict, NotFound
 from app.core.money import MoneyIn, MoneyOut, QtyOut, qty
 from app.core.permissions import Permission
+from app.core.storage import signed_url
 from app.models import Category, Product, StockMovement
 from app.modules import audit, subscriptions
 from app.modules.inventory import apply_stock_change, lock_products, weighted_average_cost
@@ -102,6 +103,7 @@ class ProductOut(BaseModel):
     reorder_level: QtyOut
     stock_status: str
     attributes: dict[str, Any]
+    image_url: str | None = None
     is_active: bool
     version: int
     created_at: datetime
@@ -177,6 +179,7 @@ def product_out(p: Product, ctx: BusinessContext) -> ProductOut:
         reorder_level=p.reorder_level,
         stock_status=stock_status(p),
         attributes=attributes,
+        image_url=signed_url(p.image_file_id),
         is_active=p.is_active,
         version=p.version,
         created_at=p.created_at,

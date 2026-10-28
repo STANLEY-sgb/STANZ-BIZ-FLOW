@@ -28,6 +28,7 @@ from app.core.database import utcnow
 from app.core.errors import AppError, Conflict, Forbidden, NotFound
 from app.core.money import MoneyIn, MoneyOut, QtyIn, QtyOut, format_qty, money, qty
 from app.core.permissions import Permission
+from app.core.storage import signed_url
 from app.models import Business, Customer, Payment, Sale, SaleItem, SaleReturn, SaleReturnLine, User
 from app.modules import audit, subscriptions
 from app.modules.inventory import apply_stock_change, lock_products
@@ -174,6 +175,7 @@ class ReceiptLine(BaseModel):
 
 class ReceiptOut(BaseModel):
     business_name: str
+    logo_url: str | None = None
     business_phone: str | None
     business_address: str | None
     currency: str
@@ -566,6 +568,7 @@ def read_receipt(sale_id: uuid.UUID, db: DB, ctx: BusinessContext = require(Perm
     customer = db.get(Customer, sale.customer_id) if sale.customer_id else None
     return ReceiptOut(
         business_name=b.name,
+        logo_url=signed_url(b.logo_file_id),
         business_phone=b.phone,
         business_address=b.address,
         currency=b.currency,

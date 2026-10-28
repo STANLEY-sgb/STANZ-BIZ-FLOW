@@ -43,6 +43,13 @@ class Settings(BaseSettings):
 
     max_page_size: int = 100
 
+    # File storage. "local" writes under local_storage_dir (mount a persistent volume in production).
+    # An S3-compatible backend (AWS S3, Cloudflare R2, Supabase Storage) plugs in behind app/core/storage.py.
+    storage_backend: str = "local"
+    local_storage_dir: str = "./data/uploads"
+    # Signed file links expire after this many seconds.
+    file_url_ttl_seconds: int = 3600
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_origins(cls, value: object) -> object:

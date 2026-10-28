@@ -24,6 +24,8 @@ class Business(IdMixin, TimestampMixin, Base):
     email: Mapped[str | None] = mapped_column(String(320))
     address: Mapped[str | None] = mapped_column(String(300))
     receipt_footer: Mapped[str | None] = mapped_column(String(300))
+    # References stored_files.id (no FK constraint: stored_files already references businesses).
+    logo_file_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
     # Prices are tax-inclusive; the tax shown on receipts is extracted at this rate.
     tax_rate_percent: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("0"), nullable=False)
     enforce_stock: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

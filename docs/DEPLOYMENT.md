@@ -13,6 +13,7 @@ created and paid for by STANZ DIGITAL CONNECT.
 | Secret manager | Holds `DATABASE_URL`, `JWT_SECRET` (≥ 32 random characters) and SMTP credentials |
 | SMTP provider | Needed for password reset and invitation emails (`EMAIL_BACKEND=smtp`) |
 | Error monitoring | e.g. Sentry (not yet integrated) |
+| Persistent volume for uploads | Product photos and logos when `STORAGE_BACKEND=local` (mounted at `/data/uploads` in the image). Back it up with the database, or switch to object storage |
 | Redis (optional) | Only when running multiple API replicas (shared rate limits) |
 
 ## Environment variables

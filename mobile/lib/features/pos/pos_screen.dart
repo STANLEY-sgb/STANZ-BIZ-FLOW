@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/api/api_error.dart';
+import '../../core/media/media.dart';
 import '../../core/money.dart';
 import '../../core/session.dart';
 import '../../core/theme/app_theme.dart';
@@ -46,7 +47,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   /// Hardware/Bluetooth barcode scanners type the code and press Enter.
-  Future<void> _onSubmitted(Business b, String code) async {
+  Future<void> _onSubmitted(Business b, String code, {bool fromCamera = false}) async {
     if (code.trim().isEmpty) return;
     Product? p;
     try {
@@ -55,7 +56,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       // Offline: use the saved catalogue. Otherwise it is not an exact code, so keep it as a search.
       if (e.isNetwork) p = await ref.read(offlineSyncProvider).cachedByCode(b.id, code.trim());
     }
-    if (p == null || !mounted) return;
+    if (!mounted) return;
+    if (p == null) {
+      if (fromCamera) showMessage(context, 'No product with barcode $code', error: true);
+      return;
+    }
     _add(b, p);
     _search.clear();
     _onSearch('');
@@ -106,9 +111,17 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   onChanged: _onSearch,
                   onSubmitted: (v) => _onSubmitted(b, v),
                   textInputAction: TextInputAction.search,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Search or scan a barcode',
-                    prefixIcon: Icon(Icons.qr_code_scanner_rounded),
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: IconButton(
+                      tooltip: 'Scan with camera',
+                      icon: const Icon(Icons.qr_code_scanner_rounded, color: BizColors.primary),
+                      onPressed: () async {
+                        final code = await scanBarcode(context);
+                        if (code != null) await _onSubmitted(b, code, fromCamera: true);
+                      },
+                    ),
                   ),
                 ),
               ),

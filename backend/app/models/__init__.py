@@ -2,6 +2,7 @@
 
 from app.models.business import AuditEvent, Business, BusinessSubscription, Invitation, Membership
 from app.models.catalog import Category, Product, StockMovement
+from app.models.files import StoredFile
 from app.models.identity import AuthSession, OneTimeToken, User
 from app.models.sales import Customer, Expense, Payment, Sale, SaleItem, SaleReturn, SaleReturnLine
 
@@ -23,5 +24,6 @@ __all__ = [
     "SaleReturn",
     "SaleReturnLine",
     "StockMovement",
+    "StoredFile",
     "User",
 ]

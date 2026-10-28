@@ -123,6 +123,28 @@ class BizFlowApi {
     ),
   );
 
+  Future<Product> uploadProductImage(
+    String bid,
+    String productId, {
+    required List<int> bytes,
+    required String filename,
+  }) async => Product.fromJson(
+    await client.postFile<Json>(
+      '/businesses/$bid/products/$productId/image',
+      field: 'file',
+      filename: filename,
+      bytes: bytes,
+    ),
+  );
+
+  Future<Product> deleteProductImage(String bid, String productId) async =>
+      Product.fromJson(await client.deleteJson('/businesses/$bid/products/$productId/image'));
+
+  Future<void> uploadLogo(String bid, {required List<int> bytes, required String filename}) =>
+      client.postFile<Json>('/businesses/$bid/logo', field: 'file', filename: filename, bytes: bytes);
+
+  Future<void> deleteLogo(String bid) => client.delete('/businesses/$bid/logo');
+
   Future<List<int>> exportProductsCsv(String bid) => client.getBytes('/businesses/$bid/products/export.csv');
 
   Future<StockMovement> adjustStock(String bid, String productId, Json body) async => StockMovement.fromJson(

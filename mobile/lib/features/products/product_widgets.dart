@@ -11,12 +11,13 @@ Tone stockTone(StockStatus s) => switch (s) {
   StockStatus.untracked => Tone.neutral,
 };
 
-/// Colour-keyed initials tile used until product photos are supported.
+/// Product photo, or a colour-keyed initials tile when there is no photo (or it cannot load, e.g. offline).
 class ProductAvatar extends StatelessWidget {
-  const ProductAvatar({super.key, required this.name, this.size = 48});
+  const ProductAvatar({super.key, required this.name, this.size = 48, this.imageUrl});
 
   final String name;
   final double size;
+  final String? imageUrl;
 
   static const _palette = [
     (BizColors.secondaryContainer, BizColors.onSecondaryContainer),
@@ -29,15 +30,30 @@ class ProductAvatar extends StatelessWidget {
     final (bg, fg) = _palette[name.hashCode.abs() % _palette.length];
     final words = name.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
     final initials = words.take(2).map((w) => w.characters.first.toUpperCase()).join();
+    final fallback = Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(Radii.md)),
+      child: Text(
+        initials,
+        style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: size * 0.34),
+      ),
+    );
+    if (imageUrl == null) return ExcludeSemantics(child: fallback);
+    final px = (size * MediaQuery.devicePixelRatioOf(context)).round();
     return ExcludeSemantics(
-      child: Container(
-        width: size,
-        height: size,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(Radii.md)),
-        child: Text(
-          initials,
-          style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: size * 0.34),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(Radii.md),
+        child: Image.network(
+          imageUrl!,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          cacheWidth: px, // decode at display size to keep memory low in long lists
+          gaplessPlayback: true,
+          errorBuilder: (_, _, _) => fallback,
+          loadingBuilder: (_, child, progress) => progress == null ? child : fallback,
         ),
       ),
     );
@@ -62,7 +78,7 @@ class ProductTile extends StatelessWidget {
       padding: const EdgeInsets.all(Space.sm),
       child: Row(
         children: [
-          ProductAvatar(name: p.name),
+          ProductAvatar(name: p.name, imageUrl: p.imageUrl),
           const SizedBox(width: Space.sm),
           Expanded(
             child: Column(

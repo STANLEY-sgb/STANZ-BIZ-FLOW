@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/api/api_error.dart';
+import '../../core/media/media.dart';
 import '../../core/session.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/widgets/widgets.dart';
@@ -490,6 +491,8 @@ class _BusinessSettingsScreenState extends ConsumerState<BusinessSettingsScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    _LogoEditor(business: b),
+                    const SizedBox(height: Space.lg),
                     field(_name, 'Business name'),
                     field(_phone, 'Phone shown on receipts', type: TextInputType.phone),
                     field(_address, 'Address shown on receipts'),
@@ -528,6 +531,87 @@ class _BusinessSettingsScreenState extends ConsumerState<BusinessSettingsScreen>
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// Business logo shown on receipts. Optional: receipts look complete without one.
+class _LogoEditor extends ConsumerStatefulWidget {
+  const _LogoEditor({required this.business});
+
+  final Business business;
+
+  @override
+  ConsumerState<_LogoEditor> createState() => _LogoEditorState();
+}
+
+class _LogoEditorState extends ConsumerState<_LogoEditor> {
+  bool _busy = false;
+
+  Future<void> _change() async {
+    final b = widget.business;
+    final action = await choosePhotoAction(context, hasPhoto: b.logoUrl != null);
+    if (action == null || !mounted) return;
+    try {
+      if (action == PhotoAction.remove) {
+        setState(() => _busy = true);
+        await ref.read(apiProvider).deleteLogo(b.id);
+      } else {
+        final photo = await pickPhoto(action);
+        if (photo == null || !mounted) return;
+        setState(() => _busy = true);
+        await ref.read(apiProvider).uploadLogo(b.id, bytes: photo.bytes, filename: photo.filename);
+      }
+      ref.invalidate(currentBusinessProvider);
+      if (mounted) showMessage(context, action == PhotoAction.remove ? 'Logo removed' : 'Logo saved');
+    } on ApiError catch (e) {
+      if (mounted) showMessage(context, e.message, error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final logo = widget.business.logoUrl;
+    return AppCard(
+      onTap: _busy ? null : _change,
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(Radii.md),
+            child: SizedBox.square(
+              dimension: 64,
+              child: _busy
+                  ? const Center(child: CircularProgressIndicator(strokeWidth: 2.4))
+                  : logo == null
+                  ? Container(
+                      color: BizColors.secondaryContainer,
+                      child: const Icon(Icons.storefront_rounded, color: BizColors.secondary, size: 30),
+                    )
+                  : Image.network(
+                      logo,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) => const Icon(Icons.broken_image_outlined),
+                    ),
+            ),
+          ),
+          const SizedBox(width: Space.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Business logo', style: Theme.of(context).textTheme.titleSmall),
+                Text(
+                  logo == null ? 'Add your logo to show it on receipts.' : 'Shown on receipts. Tap to change.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right_rounded, color: BizColors.textSecondary),
+        ],
       ),
     );
   }

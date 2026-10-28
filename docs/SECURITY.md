@@ -14,6 +14,8 @@
 | Sensitive fields (cost price, IMEI/serial) hidden *and* protected from overwrite | `modules/products.py` | `test_cashier_can_sell_but_not_see_confidential_data` |
 | Server-authoritative prices, totals and stock; idempotency | `modules/sales.py` | `tests/test_sales.py` |
 | Paid plans only via verified provider callbacks | `modules/subscriptions.py` | `test_checkout_does_not_grant_plan` |
+| Image uploads content-sniffed, size and pixel capped, re-encoded with EXIF/GPS stripped | `modules/files.py` | `tests/test_files.py` |
+| Files served only via signed, expiring HMAC links (no guessable URLs) | `core/storage.py` | `test_signed_links_cannot_be_forged_or_reused_after_expiry` |
 | CSV formula-injection guard on exports | `modules/reports.py` | — |
 | Uniform error envelope, no stack traces to clients | `core/errors.py` | `test_error_responses_hide_internals` |
 | Production refuses weak `JWT_SECRET` or the log-only email backend; API docs disabled | `core/config.py`, `main.py` | — |
@@ -28,7 +30,7 @@ Logs record method, path, status and duration. They never record query strings, 
 - PostgreSQL Row-Level Security as defence in depth (needs a non-owner application role and a transaction-local
   `app.business_id` setting; it must be tested with the connection pooler)
 - Redis-backed rate limiting when running more than one API instance
-- File upload validation and signed URLs, when uploads are added
+- Move uploads to object storage with server-side encryption before scaling beyond one API instance
 - Run `pip-audit` and `flutter pub outdated` in CI on every merge (the workflow includes `pip-audit`)
 - An external penetration test before handling real customer data at scale
 

@@ -241,6 +241,18 @@ class _ReceiptCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (r.logoUrl != null) ...[
+            Center(
+              child: Image.network(
+                r.logoUrl!,
+                height: 56,
+                fit: BoxFit.contain,
+                semanticLabel: '${r.businessName} logo',
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              ),
+            ),
+            const SizedBox(height: Space.xs),
+          ],
           Text(r.businessName, style: t.titleLarge, textAlign: TextAlign.center),
           if (r.businessAddress != null) Text(r.businessAddress!, style: t.bodySmall, textAlign: TextAlign.center),
           if (r.businessPhone != null) Text(r.businessPhone!, style: t.bodySmall, textAlign: TextAlign.center),

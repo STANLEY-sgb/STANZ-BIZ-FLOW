@@ -31,3 +31,6 @@ mobile/android/local.properties
 *.iml
 .DS_Store
 Thumbs.db
+
+# Uploaded files (local storage backend)
+backend/data/

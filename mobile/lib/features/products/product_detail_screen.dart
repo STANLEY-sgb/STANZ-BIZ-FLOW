@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/api/api_error.dart';
+import '../../core/media/media.dart';
 import '../../core/money.dart';
 import '../../core/session.dart';
 import '../../core/theme/tokens.dart';
@@ -83,7 +84,7 @@ class ProductDetailScreen extends ConsumerWidget {
                     children: [
                       Row(
                         children: [
-                          ProductAvatar(name: p.name, size: 64),
+                          _ProductPhoto(product: p, editable: business?.can(Perm.productsManage) ?? false),
                           const SizedBox(width: Space.md),
                           Expanded(
                             child: Column(
@@ -434,6 +435,78 @@ class _StockSheetState extends ConsumerState<_StockSheet> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Product photo with a camera badge; tapping lets managers take, choose or remove a photo.
+class _ProductPhoto extends ConsumerStatefulWidget {
+  const _ProductPhoto({required this.product, required this.editable});
+
+  final Product product;
+  final bool editable;
+
+  @override
+  ConsumerState<_ProductPhoto> createState() => _ProductPhotoState();
+}
+
+class _ProductPhotoState extends ConsumerState<_ProductPhoto> {
+  bool _busy = false;
+
+  Future<void> _change() async {
+    final p = widget.product;
+    final action = await choosePhotoAction(context, hasPhoto: p.imageUrl != null);
+    if (action == null || !mounted) return;
+    final api = ref.read(apiProvider);
+    final bid = ref.read(activeBusinessIdProvider);
+    try {
+      if (action == PhotoAction.remove) {
+        setState(() => _busy = true);
+        await api.deleteProductImage(bid, p.id);
+      } else {
+        final photo = await pickPhoto(action);
+        if (photo == null || !mounted) return;
+        setState(() => _busy = true);
+        await api.uploadProductImage(bid, p.id, bytes: photo.bytes, filename: photo.filename);
+      }
+      invalidateCatalog(ref);
+      if (mounted) showMessage(context, action == PhotoAction.remove ? 'Photo removed' : 'Photo saved');
+    } on ApiError catch (e) {
+      if (mounted) showMessage(context, e.message, error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final avatar = Stack(
+      clipBehavior: Clip.none,
+      children: [
+        ProductAvatar(name: widget.product.name, imageUrl: widget.product.imageUrl, size: 72),
+        if (_busy) const Positioned.fill(child: Center(child: CircularProgressIndicator(strokeWidth: 2.4))),
+        if (widget.editable && !_busy)
+          Positioned(
+            right: -6,
+            bottom: -6,
+            child: Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: BizColors.primary,
+                shape: BoxShape.circle,
+                border: Border.all(color: BizColors.surface, width: 2),
+              ),
+              child: const Icon(Icons.photo_camera_rounded, size: 14, color: Colors.white),
+            ),
+          ),
+      ],
+    );
+    if (!widget.editable) return avatar;
+    return Semantics(
+      container: true,
+      button: true,
+      label: widget.product.imageUrl == null ? 'Add product photo' : 'Change product photo',
+      child: InkWell(borderRadius: BorderRadius.circular(Radii.md), onTap: _busy ? null : _change, child: avatar),
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/api/api_error.dart';
+import '../../core/media/media.dart';
 import '../../core/money.dart';
 import '../../core/session.dart';
 import '../../core/theme/tokens.dart';
@@ -197,6 +198,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     String? Function(String?)? validator,
     String? prefix,
     String? helper,
+    Widget? suffix,
   }) => Padding(
     padding: const EdgeInsets.only(bottom: Space.md),
     child: TextFormField(
@@ -210,6 +212,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         hintText: hint,
         prefixText: prefix,
         helperText: helper,
+        suffixIcon: suffix,
         errorText: _fieldErrors[{'price': 'selling_price', 'cost': 'cost_price'}[key] ?? key],
       ),
     ),
@@ -334,7 +337,19 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         ),
                       const SectionHeader('Codes'),
                       _field('sku', 'SKU / item code (optional)'),
-                      _field('barcode', 'Barcode (optional)', keyboard: TextInputType.number),
+                      _field(
+                        'barcode',
+                        'Barcode (optional)',
+                        keyboard: TextInputType.number,
+                        suffix: IconButton(
+                          tooltip: 'Scan with camera',
+                          icon: const Icon(Icons.qr_code_scanner_rounded, color: BizColors.primary),
+                          onPressed: () async {
+                            final code = await scanBarcode(context);
+                            if (code != null) setState(() => _c['barcode']!.text = code);
+                          },
+                        ),
+                      ),
                       const SizedBox(height: Space.xs),
                       AppCard(
                         padding: EdgeInsets.zero,

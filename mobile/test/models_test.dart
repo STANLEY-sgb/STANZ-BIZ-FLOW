@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:stanz_bizflow/core/api/api_client.dart';
 import 'package:stanz_bizflow/core/money.dart';
 import 'package:stanz_bizflow/data/models.dart';
 
@@ -42,6 +43,14 @@ void main() {
     expect(r.errors.single.row, 4);
     expect(r.preview.first.price, Money.parse('450000'));
     expect(r.preview.last.price, isNull);
+  });
+
+  test('server-relative file links become absolute URLs on the API host', () {
+    final url = fileUrl('/api/v1/files/abc?exp=1&sig=x')!;
+    expect(Uri.parse(url).path, '/api/v1/files/abc');
+    expect(Uri.parse(url).queryParameters, {'exp': '1', 'sig': 'x'});
+    expect(Uri.parse(url).host, Uri.parse(apiBaseUrl).host);
+    expect(fileUrl(null), isNull);
   });
 
   test('customer detail parses purchase stats when present', () {

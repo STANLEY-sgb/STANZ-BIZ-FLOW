@@ -1,6 +1,6 @@
 # STANZ BizFlow — implementation plan & status
 
-_Last updated: 2026-10-28 (milestone 3: import/export, customers)_
+_Last updated: 2026-10-28 (milestone 4: photos, logo, camera scanning)_
 
 ## Starting point
 
@@ -110,14 +110,38 @@ Issues found on the device and fixed in this milestone:
 - **Build fix (Windows):** turned off Kotlin incremental compilation, which crashes when plugin sources (Pub
   cache on C:) and the project (E:) are on different drives.
 
+## Milestone 4 — product photos, business logo, camera scanning (delivered, device-tested)
+
+- **Storage boundary** (`app/core/storage.py`): a local-disk backend is implemented. A cloud provider
+  (S3 / R2 / Supabase) plugs in behind the same three methods once one is chosen.
+- **Uploads** (`POST/DELETE /products/{id}/image`, `POST/DELETE /logo`): content-sniffed JPEG/PNG/WebP only,
+  5 MB cap, decompression-bomb pixel cap. Every image is re-encoded to WebP and downscaled (1024 px for
+  products, 512 px for logos), with orientation applied and **all EXIF/GPS metadata stripped**. Replaced or
+  removed images are deleted from storage.
+- **Downloads** (`GET /files/{id}?exp&sig`) only work through **signed, expiring HMAC links** (1 hour by
+  default). Links can't be guessed, forged or reused after they expire, and file URLs never sit unsigned in
+  product JSON.
+- **Migration 0002** (`stored_files`, `products.image_file_id`, `businesses.logo_file_id`): verified by the
+  migration test, and applied to the existing device-test database with real data in it.
+- **Mobile:** product photos from the camera or gallery (Android photo picker, so the app sees only the
+  chosen photo), shown on tiles, the till and the detail page, with an initials fallback offline. Logo
+  editor in settings; logo on receipts. Full-screen camera barcode scanner (EAN/UPC/Code 128/39/QR) with a
+  torch, opened from the till search box and the product form's barcode field.
+- **Tests:** 6 backend tests (EXIF stripped, resize, forged/expired links, replacement cleanup, content-sniffing,
+  permissions/tenancy, logo on receipt), plus a mobile URL test.
+- **Device test (S21):** uploaded a product photo from the gallery; the stored file was a 1024×1024 WebP with
+  empty EXIF (40 KB → 4.5 KB). The photo shows on the product page and the till. Uploaded a logo, which shows on
+  the receipt. The scanner opened with a live camera, **but no physical barcode was scanned** (that needs
+  someone holding a barcode in front of the phone).
+- **Found on the device and fixed:** the photo button's accessibility node swallowed the whole product header;
+  the scanner's title was invisible (theme colour override); and the scanner did not cover the bottom tab bar.
+
 ## Next milestones (recommended order)
 
-1. **Product photos and receipt logo:** object storage, signed URLs and upload validation.
-2. **Camera barcode scanning** (hardware/Bluetooth scanners already work through the search field).
-3. **Email provider** (SMTP is implemented and needs credentials), email verification.
-4. **Billing provider** after choosing one (e.g. a Ugandan mobile money aggregator for web billing) and reviewing Google Play / App Store rules for in-app digital subscriptions.
-5. **Hardening:** asynchronous jobs for very large imports, PostgreSQL Row-Level Security as a second isolation layer, Redis-backed rate limiting for multi-instance deployments, load testing, crash reporting (Sentry or Firebase Crashlytics).
-6. **Brand assets:** final app icon and splash (the in-app logo mark is drawn in code for now), store screenshots.
+1. **Email provider** (SMTP is implemented and needs credentials), email verification.
+2. **Billing provider** after choosing one (e.g. a Ugandan mobile money aggregator for web billing) and reviewing Google Play / App Store rules for in-app digital subscriptions.
+3. **Hardening:** asynchronous jobs for very large imports, PostgreSQL Row-Level Security as a second isolation layer, Redis-backed rate limiting for multi-instance deployments, load testing, crash reporting (Sentry or Firebase Crashlytics).
+4. **Brand assets:** final app icon and splash (the in-app logo mark is drawn in code for now), store screenshots.
 
 ## Known limitations (honest status)
 

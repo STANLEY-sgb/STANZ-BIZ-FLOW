@@ -16,6 +16,7 @@ from app.modules import (
     businesses,
     customers,
     expenses,
+    files,
     health,
     product_import,
     products,
@@ -56,7 +57,7 @@ def create_app() -> FastAPI:
         duration_ms = round((time.perf_counter() - start) * 1000, 1)
         response.headers["X-Request-ID"] = request_id
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["Cache-Control"] = "no-store"
+        response.headers.setdefault("Cache-Control", "no-store")
         # Path only (never query strings, which may contain tokens).
         request_logger.info(
             "request",
@@ -78,6 +79,7 @@ def create_app() -> FastAPI:
         subscriptions,
         product_import,
         products,
+        files,
         sales,
         customers,
         expenses,
