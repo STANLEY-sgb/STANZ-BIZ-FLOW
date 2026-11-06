@@ -66,3 +66,34 @@ Keep backups encrypted, in a different region or account from production.
 Limits of the free plans: the API sleeps when idle (first request is slow), uploaded photos live on temporary disk and
 disappear on redeploy (use S3-compatible storage or a persistent disk for real use), and the free database expires after 30 days.
 Use `APP_ENV=production` only once SMTP email is configured; production refuses `EMAIL_BACKEND=log`.
+
+## Vercel + Supabase (serverless)
+
+**Supabase**
+1. Create a project. In *Connect*, copy two connection strings: the **Session pooler** (port 5432) and the **Transaction pooler** (port 6543).
+2. *Storage → New bucket*: name `bizflow-files`, keep it **private**.
+3. *Project Settings → API*: copy the project URL and the `service_role` key (server-side only; never put it in the app).
+
+**Create the tables (once, from your PC, using the Session pooler string)**
+```bash
+cd backend
+DATABASE_URL="postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres" .venv/Scripts/alembic upgrade head
+```
+Re-run the same command after any release that adds a migration.
+
+**Vercel** — import the GitHub repo and set **Root Directory = `backend`**. Environment variables:
+
+| Variable | Value |
+|---|---|
+| `APP_ENV` | `staging` (`production` once SMTP email is configured) |
+| `DATABASE_URL` | the **Transaction pooler** string (port 6543) |
+| `DB_SERVERLESS` | `true` |
+| `JWT_SECRET` | `python -c "import secrets; print(secrets.token_urlsafe(64))"` |
+| `STORAGE_BACKEND` | `supabase` |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `SUPABASE_BUCKET` | from the steps above (`bizflow-files`) |
+
+The API is then at `https://<project>.vercel.app/api/v1`.
+
+Notes: rate limits are kept in memory, so on serverless they apply per instance only (acceptable for a pilot; move them to
+Redis/Postgres before heavy public use). Request bodies on Vercel are limited to about 4.5 MB, which is enough for photos and
+logos but caps very large product imports.

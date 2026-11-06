@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://bizflow:bizflow@localhost:5432/bizflow"
     db_pool_size: int = 10
     db_max_overflow: int = 10
+    # Serverless hosts (Vercel) start many short-lived instances: no client-side pool, and no prepared
+    # statements (required by Supabase's transaction pooler).
+    db_serverless: bool = False
 
     jwt_secret: str = Field(default="", min_length=0)
     jwt_algorithm: str = "HS256"
@@ -47,6 +50,10 @@ class Settings(BaseSettings):
     # An S3-compatible backend (AWS S3, Cloudflare R2, Supabase Storage) plugs in behind app/core/storage.py.
     storage_backend: str = "local"
     local_storage_dir: str = "./data/uploads"
+    # STORAGE_BACKEND=supabase: private bucket accessed with the service-role key (server-side only).
+    supabase_url: str = ""
+    supabase_service_key: str = ""
+    supabase_bucket: str = "bizflow-files"
     # Signed file links expire after this many seconds.
     file_url_ttl_seconds: int = 3600
 

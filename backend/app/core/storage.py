@@ -1,8 +1,7 @@
 """File storage boundary and signed download links.
 
-Only a local-disk backend is implemented. A cloud backend (S3, R2, Supabase Storage)
-needs nothing more than the three methods of `Storage`; select it with STORAGE_BACKEND
-once the provider and its credentials are chosen.
+Backends: local disk (development) and Supabase Storage (STORAGE_BACKEND=supabase, for serverless hosts
+such as Vercel where the disk is read-only/ephemeral). Another provider needs only the three methods of `Storage`.
 
 Files are never served by guessable path. Clients receive signed URLs that bind the file id
 to an expiry time with an HMAC, so a link stops working after `file_url_ttl_seconds`.
@@ -14,6 +13,8 @@ import time
 import uuid
 from pathlib import Path
 from typing import Protocol
+
+import httpx
 
 from app.core.config import get_settings
 
@@ -49,6 +50,39 @@ class LocalStorage:
         self._path(key).unlink(missing_ok=True)
 
 
+class SupabaseStorage:
+    """Private Supabase Storage bucket over its REST API; files are served only via signed API URLs."""
+
+    def __init__(self, url: str, service_key: str, bucket: str) -> None:
+        self.base = f"{url.rstrip('/')}/storage/v1/object"
+        self.bucket = bucket
+        self.headers = {"Authorization": f"Bearer {service_key}", "apikey": service_key}
+
+    def _url(self, key: str) -> str:
+        return f"{self.base}/{self.bucket}/{key}"
+
+    def put(self, key: str, data: bytes) -> None:
+        res = httpx.post(
+            self._url(key),
+            content=data,
+            timeout=20,
+            headers=self.headers | {"x-upsert": "true", "content-type": "application/octet-stream"},
+        )
+        res.raise_for_status()
+
+    def get(self, key: str) -> bytes | None:
+        res = httpx.get(self._url(key), headers=self.headers, timeout=20)
+        if res.status_code in (400, 404):
+            return None
+        res.raise_for_status()
+        return res.content
+
+    def delete(self, key: str) -> None:
+        res = httpx.delete(self._url(key), headers=self.headers, timeout=20)
+        if res.status_code not in (200, 204, 400, 404):
+            res.raise_for_status()
+
+
 _storage: Storage | None = None
 
 
@@ -56,9 +90,14 @@ def get_storage() -> Storage:
     global _storage
     if _storage is None:
         settings = get_settings()
-        if settings.storage_backend != "local":
-            raise RuntimeError(f"Storage backend '{settings.storage_backend}' is not configured in this build")
-        _storage = LocalStorage(settings.local_storage_dir)
+        if settings.storage_backend == "supabase":
+            if not (settings.supabase_url and settings.supabase_service_key):
+                raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_KEY are required for STORAGE_BACKEND=supabase")
+            _storage = SupabaseStorage(settings.supabase_url, settings.supabase_service_key, settings.supabase_bucket)
+        elif settings.storage_backend == "local":
+            _storage = LocalStorage(settings.local_storage_dir)
+        else:
+            raise RuntimeError(f"Unknown storage backend '{settings.storage_backend}'")
     return _storage
 
 

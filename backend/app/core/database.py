@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.pool import NullPool
 
 from app.core.config import get_settings
 
@@ -32,6 +33,8 @@ def build_engine(url: str | None = None) -> Engine:
     if url.startswith("sqlite"):
         # SQLite is used only for fast local tests; PostgreSQL is the production target.
         return create_engine(url, connect_args={"check_same_thread": False})
+    if settings.db_serverless:
+        return create_engine(url, poolclass=NullPool, connect_args={"prepare_threshold": None})
     return create_engine(
         url,
         pool_size=settings.db_pool_size,
