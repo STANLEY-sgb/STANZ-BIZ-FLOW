@@ -1,0 +1,34 @@
+{
+ "items": [
+  {
+   "id": "4aa55ee0-c20a-4564-86b2-4ec704346619",
+   "name": "David Okello",
+   "phone": "+256772000002",
+   "email": null,
+   "reference": null,
+   "notes": null,
+   "created_at": "2026-11-06T18:40:32.667062Z"
+  },
+  {
+   "id": "8569b0ea-97cf-4b61-9556-5dc9898efd74",
+   "name": "Grace Atim",
+   "phone": "+256773000003",
+   "email": null,
+   "reference": null,
+   "notes": null,
+   "created_at": "2026-11-06T18:40:32.717390Z"
+  },
+  {
+   "id": "fb52a254-2e2d-4eba-b643-19f2e27715ca",
+   "name": "Sarah Namukasa",
+   "phone": "+256771000001",
+   "email": null,
+   "reference": null,
+   "notes": null,
+   "created_at": "2026-11-06T18:40:32.656664Z"
+  }
+ ],
+ "total": 3,
+ "limit": 25,
+ "offset": 0
+}

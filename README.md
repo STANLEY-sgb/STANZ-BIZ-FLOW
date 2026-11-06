@@ -36,6 +36,21 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api/v1   # Android e
 
 Release builds must point `API_BASE_URL` at an **HTTPS** endpoint. Plain HTTP is allowed only in debug builds.
 
+### Demo data and full-API smoke test
+
+With the API running (any database), this seeds a demo business (products, customers, sales, expenses) through the
+real endpoints and checks every endpoint the app uses. It exits non-zero on any failure, so run it before each release:
+
+```bash
+cd backend
+.venv/Scripts/python scripts/seed_and_smoke.py --base http://localhost:8000/api/v1   # demo login: demo@example.com / Demo12345!
+.venv/Scripts/python scripts/dump_fixtures.py                                       # refresh mobile/test/fixtures
+cd ../mobile && flutter test test/contract_test.dart                                  # app parsers vs real responses
+```
+
+A physical phone cannot use the default `10.0.2.2` address. Over USB or wireless adb run `adb reverse tcp:8000 tcp:8000`
+and build with `--dart-define=API_BASE_URL=http://localhost:8000/api/v1`.
+
 ### Tests
 
 ```bash

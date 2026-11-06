@@ -54,3 +54,15 @@ Keep backups encrypted, in a different region or account from production.
   (data collected: name, email, phone, business records).
 - Selling subscriptions inside the app may require Google Play Billing or Apple In-App Purchase. Decide
   this before enabling any in-app purchase flow.
+
+## Quick cloud demo (Render)
+
+1. Push the repository to GitHub, then in Render choose **New → Blueprint** and select it (`render.yaml` is at the root).
+2. Render creates the PostgreSQL database and the API, runs `alembic upgrade head` on every start, and generates `JWT_SECRET`.
+3. Your API is then at `https://<service>.onrender.com/api/v1`. Seed demo data with
+   `python backend/scripts/seed_and_smoke.py --base https://<service>.onrender.com/api/v1`.
+4. Build the app: `flutter build apk --release --dart-define=API_BASE_URL=https://<service>.onrender.com/api/v1`.
+
+Limits of the free plans: the API sleeps when idle (first request is slow), uploaded photos live on temporary disk and
+disappear on redeploy (use S3-compatible storage or a persistent disk for real use), and the free database expires after 30 days.
+Use `APP_ENV=production` only once SMTP email is configured; production refuses `EMAIL_BACKEND=log`.

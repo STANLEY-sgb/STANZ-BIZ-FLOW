@@ -1,0 +1,40 @@
+{
+ "business_name": "Kampala Phones & Accessories",
+ "logo_url": null,
+ "business_phone": "+256700000000",
+ "business_address": "Kampala Road, Kampala",
+ "currency": "UGX",
+ "receipt_number": "R-000007",
+ "issued_at": "2026-11-06T18:42:19.655278Z",
+ "timezone": "Africa/Kampala",
+ "cashier_name": "Demo Owner",
+ "customer_name": null,
+ "lines": [
+  {
+   "name": "Phone case",
+   "quantity": "1",
+   "unit_price": "15000.00",
+   "discount": "0.00",
+   "line_total": "15000.00"
+  }
+ ],
+ "subtotal": "15000.00",
+ "discount_total": "0.00",
+ "tax_rate_percent": "0.00",
+ "tax_total": "0.00",
+ "total": "15000.00",
+ "amount_paid": "20000.00",
+ "change_due": "5000.00",
+ "refunded_total": "0.00",
+ "payments": [
+  {
+   "kind": "payment",
+   "method": "cash",
+   "amount": "15000.00",
+   "reference": null,
+   "created_at": "2026-11-06T18:42:19.655278Z"
+  }
+ ],
+ "status": "completed",
+ "footer": null
+}

@@ -1,0 +1,41 @@
+{
+ "id": "66884b40-18c5-4687-a3fc-f4bdd5ffa0c3",
+ "client_reference": "486dd51fda3f4f6f94acd675238ba1d4",
+ "receipt_number": "R-000007",
+ "status": "completed",
+ "customer_id": null,
+ "cashier_id": "a4449d36-1eba-4594-bccd-958d78236163",
+ "subtotal": "15000.00",
+ "discount_total": "0.00",
+ "tax_total": "0.00",
+ "total": "15000.00",
+ "amount_paid": "20000.00",
+ "change_due": "5000.00",
+ "refunded_total": "0.00",
+ "note": null,
+ "source": "online",
+ "created_at": "2026-11-06T18:42:19.655278Z",
+ "client_created_at": null,
+ "items": [
+  {
+   "id": "4b0619af-1f39-4163-88eb-85f12ad513db",
+   "product_id": "74fa4888-e931-4f7a-9164-f55374da3566",
+   "product_name": "Phone case",
+   "sku": "SKU-6901004",
+   "quantity": "1",
+   "unit_price": "15000.00",
+   "discount": "0.00",
+   "line_total": "15000.00",
+   "quantity_returned": "0"
+  }
+ ],
+ "payments": [
+  {
+   "kind": "payment",
+   "method": "cash",
+   "amount": "15000.00",
+   "reference": null,
+   "created_at": "2026-11-06T18:42:19.655278Z"
+  }
+ ]
+}

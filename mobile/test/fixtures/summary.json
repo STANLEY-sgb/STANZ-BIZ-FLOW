@@ -1,0 +1,16 @@
+{
+ "date_from": "2026-11-01",
+ "date_to": "2026-11-06",
+ "sales_count": 7,
+ "gross_sales": "1801000.00",
+ "discounts": "0.00",
+ "refunds": "535000.00",
+ "net_sales": "1266000.00",
+ "tax_included": "0.00",
+ "average_sale": "257285.71",
+ "cogs": "968000.00",
+ "gross_profit": "298000.00",
+ "cost_data_complete": true,
+ "expenses": "670000.00",
+ "net_profit": "-372000.00"
+}

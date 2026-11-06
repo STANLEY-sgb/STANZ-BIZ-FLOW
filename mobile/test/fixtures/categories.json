@@ -1,0 +1,22 @@
+[
+ {
+  "id": "d0797e63-0257-4c77-a31e-278666a0b1e6",
+  "name": "Accessories",
+  "product_count": 0
+ },
+ {
+  "id": "6ff5a21a-ddf6-47cb-bd2d-f4b2bb9b8d92",
+  "name": "Laptops",
+  "product_count": 0
+ },
+ {
+  "id": "1941065a-eda0-4ec9-9b35-93535469853f",
+  "name": "Phones",
+  "product_count": 3
+ },
+ {
+  "id": "1212ae7a-6895-4cd5-a782-a5b6c6ba5182",
+  "name": "Repairs",
+  "product_count": 0
+ }
+]

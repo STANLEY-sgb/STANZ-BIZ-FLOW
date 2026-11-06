@@ -1,0 +1,26 @@
+{
+ "plan": {
+  "code": "professional",
+  "name": "Professional",
+  "max_products": null,
+  "max_members": 25,
+  "max_sales_per_month": null,
+  "features": [
+   "advanced_reports",
+   "customers",
+   "expenses",
+   "exports",
+   "multi_branch",
+   "team"
+  ],
+  "trial_days": 14
+ },
+ "status": "trialing",
+ "trial_ends_at": "2026-11-20T18:40:32.322100Z",
+ "current_period_end": null,
+ "usage": {
+  "products": 8,
+  "members": 1,
+  "sales_this_month": 7
+ }
+}

@@ -50,6 +50,15 @@ class Settings(BaseSettings):
     # Signed file links expire after this many seconds.
     file_url_ttl_seconds: int = 3600
 
+    @field_validator("database_url")
+    @classmethod
+    def _psycopg_driver(cls, value: str) -> str:
+        # Hosts such as Render/Heroku hand out "postgres://" or "postgresql://"; we use the psycopg 3 driver.
+        for prefix in ("postgres://", "postgresql://"):
+            if value.startswith(prefix):
+                return "postgresql+psycopg://" + value[len(prefix) :]
+        return value
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_origins(cls, value: object) -> object:

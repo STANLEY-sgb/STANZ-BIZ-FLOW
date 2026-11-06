@@ -1,0 +1,140 @@
+{
+ "scope": "business",
+ "currency": "UGX",
+ "timezone": "Africa/Kampala",
+ "period": "today",
+ "current": {
+  "date_from": "2026-11-06",
+  "date_to": "2026-11-06",
+  "sales_count": 7,
+  "gross_sales": "1801000.00",
+  "discounts": "0.00",
+  "refunds": "535000.00",
+  "net_sales": "1266000.00",
+  "tax_included": "0.00",
+  "average_sale": "257285.71",
+  "cogs": "968000.00",
+  "gross_profit": "298000.00",
+  "cost_data_complete": true,
+  "expenses": "620000.00",
+  "net_profit": "-322000.00"
+ },
+ "previous": {
+  "date_from": "2026-11-05",
+  "date_to": "2026-11-05",
+  "sales_count": 0,
+  "gross_sales": "0.00",
+  "discounts": "0.00",
+  "refunds": "0.00",
+  "net_sales": "0.00",
+  "tax_included": "0.00",
+  "average_sale": "0.00",
+  "cogs": "0.00",
+  "gross_profit": "0.00",
+  "cost_data_complete": true,
+  "expenses": "50000.00",
+  "net_profit": "-50000.00"
+ },
+ "my_sales_today": {
+  "label": "my_sales_today",
+  "count": 7,
+  "amount": "1266000.00"
+ },
+ "inventory": {
+  "active_products": 8,
+  "tracked_products": 8,
+  "low_stock": 1,
+  "out_of_stock": 1,
+  "units_on_hand": "309",
+  "valuation_at_cost": "21847000.00",
+  "valuation_at_price": "28259000.00"
+ },
+ "low_stock": [
+  {
+   "product_id": "ff029801-51cd-40f3-a6ff-2a241e6b9094",
+   "name": "Earphones",
+   "quantity_on_hand": "0",
+   "reorder_level": "5"
+  },
+  {
+   "product_id": "297f767e-64f8-49cd-b419-4b8360554300",
+   "name": "Infinix Hot 40",
+   "quantity_on_hand": "3",
+   "reorder_level": "5"
+  }
+ ],
+ "top_products": [
+  {
+   "product_id": "63c477f8-7713-42d1-a4ef-758ca8a0808a",
+   "name": "Samsung Galaxy A15",
+   "quantity": "1",
+   "revenue": "650000.00",
+   "gross_profit": null
+  },
+  {
+   "product_id": "90cf5802-d089-45ef-bab5-99e03a66723c",
+   "name": "Tecno Spark 20",
+   "quantity": "1",
+   "revenue": "450000.00",
+   "gross_profit": null
+  },
+  {
+   "product_id": "74fa4888-e931-4f7a-9164-f55374da3566",
+   "name": "Phone case",
+   "quantity": "3",
+   "revenue": "45000.00",
+   "gross_profit": null
+  },
+  {
+   "product_id": "4a5591c7-fd26-4ea8-92f7-162d54cbc250",
+   "name": "Fast charger 25W",
+   "quantity": "1",
+   "revenue": "45000.00",
+   "gross_profit": null
+  },
+  {
+   "product_id": "a7601e7e-3036-4e60-bc32-62b94a7ff619",
+   "name": "Screen protector",
+   "quantity": "5",
+   "revenue": "40000.00",
+   "gross_profit": null
+  }
+ ],
+ "recent_sales": [
+  {
+   "id": "66884b40-18c5-4687-a3fc-f4bdd5ffa0c3",
+   "receipt_number": "R-000007",
+   "total": "15000.00",
+   "status": "completed",
+   "created_at": "2026-11-06T18:42:19.655278+00:00"
+  },
+  {
+   "id": "5ab3d7ce-6a85-40be-8021-ee45646b7510",
+   "receipt_number": "R-000006",
+   "total": "15000.00",
+   "status": "refunded",
+   "created_at": "2026-11-06T18:40:32.976954+00:00"
+  },
+  {
+   "id": "4e3df2eb-71bc-411f-a768-83d08dcfe94a",
+   "receipt_number": "R-000005",
+   "total": "520000.00",
+   "status": "refunded",
+   "created_at": "2026-11-06T18:40:32.934451+00:00"
+  },
+  {
+   "id": "657edd6d-2208-413c-893b-4cef8b79f592",
+   "receipt_number": "R-000004",
+   "total": "40000.00",
+   "status": "completed",
+   "created_at": "2026-11-06T18:40:32.916170+00:00"
+  },
+  {
+   "id": "6da72880-bf1d-4f84-8828-63b4f361183f",
+   "receipt_number": "R-000003",
+   "total": "81000.00",
+   "status": "completed",
+   "created_at": "2026-11-06T18:40:32.893450+00:00"
+  }
+ ]
+}
